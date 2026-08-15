@@ -14,13 +14,23 @@ const defaultProfile: UserProfile = {
   preferredLocation: '',
   remotePreference: 'Open to remote',
   linkedinUrl: '',
-portfolioUrl: '',
+  portfolioUrl: '',
 };
 
+function loadProfile(): UserProfile {
+  const stored = loadFromStorage<Partial<UserProfile>>(STORAGE_KEY, {});
+
+  return {
+    ...defaultProfile,
+    ...stored,
+    skills: Array.isArray(stored.skills)
+      ? stored.skills
+      : defaultProfile.skills,
+  };
+}
+
 export function useProfile() {
-  const [profile, setProfile] = useState<UserProfile>(() =>
-    loadFromStorage<UserProfile>(STORAGE_KEY, defaultProfile)
-  );
+  const [profile, setProfile] = useState<UserProfile>(loadProfile);
 
   useEffect(() => {
     saveToStorage(STORAGE_KEY, profile);
