@@ -43,8 +43,9 @@ export interface UserProfile {
   preferredJobType: string;
   preferredLocation: string;
   remotePreference: string;
+  linkedinUrl: string;
+  portfolioUrl: string;
 }
-
 export interface ResumeData {
   fullName: string;
   email: string;
