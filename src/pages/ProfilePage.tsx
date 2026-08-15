@@ -115,6 +115,27 @@ const profileCompletion = Math.round(
             </div>
           </div>
         </div>
+        <div>
+  <label className="label">LinkedIn Profile</label>
+  <input
+    className="input"
+    type="url"
+    value={profile.linkedinUrl}
+    onChange={(e) => updateProfile({ linkedinUrl: e.target.value })}
+    placeholder="https://linkedin.com/in/your-name"
+  />
+</div>
+
+<div>
+  <label className="label">Portfolio / Website</label>
+  <input
+    className="input"
+    type="url"
+    value={profile.portfolioUrl}
+    onChange={(e) => updateProfile({ portfolioUrl: e.target.value })}
+    placeholder="https://yourwebsite.com"
+  />
+</div>
 
         {/* Skills */}
         <div className="card p-6">
