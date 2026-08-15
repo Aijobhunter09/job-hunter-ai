@@ -19,6 +19,7 @@ const routes = [
   { pattern: '/', component: 'home' },
   { pattern: '/dashboard', component: 'dashboard' },
   { pattern: '/jobs', component: 'jobs' },
+  { pattern: '/saved-jobs', component: 'savedJobs' },
   { pattern: '/jobs/:id', component: 'jobDetails' },
   { pattern: '/resume', component: 'resume' },
   { pattern: '/applications', component: 'applications' },
@@ -39,6 +40,8 @@ function renderPage(path: string) {
       return <DashboardPage />;
     case 'jobs':
       return <JobsPage />;
+      case 'savedJobs':
+  return <SavedJobsPage />;
     case 'jobDetails':
       return <JobDetailsPage jobId={match.params.id} />;
     case 'resume':
