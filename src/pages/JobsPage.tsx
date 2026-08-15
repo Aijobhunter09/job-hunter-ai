@@ -10,110 +10,11 @@ import {
   X,
   CheckCircle2,
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
 import { useApplications } from '@/hooks/useApplications';
-import type { Application } from '@/types';
-
-type Job = {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
-  workplace: 'Remote' | 'On-site' | 'Hybrid';
-  experience: 'Entry Level' | 'Mid Level' | 'Senior Level';
-  salary: string;
-  description: string;
-  skills: string[];
-  url: string;
-};
-
-const jobs: Job[] = [
-  {
-    id: 1,
-    title: 'Frontend Developer',
-    company: 'TechNova Solutions',
-    location: 'Lahore, Pakistan',
-    type: 'Full-time',
-    workplace: 'Remote',
-    experience: 'Mid Level',
-    salary: '$1,000 - $1,800 / month',
-    description:
-      'Build responsive web applications using React, TypeScript, and modern frontend technologies.',
-    skills: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 2,
-    title: 'SEO Specialist',
-    company: 'Digital Growth Agency',
-    location: 'Karachi, Pakistan',
-    type: 'Full-time',
-    workplace: 'Hybrid',
-    experience: 'Mid Level',
-    salary: '$700 - $1,400 / month',
-    description:
-      'Develop SEO strategies, perform keyword research, optimize websites, and monitor search performance.',
-    skills: ['SEO', 'Google Search Console', 'Keyword Research', 'Analytics'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 3,
-    title: 'Junior Web Developer',
-    company: 'WebCraft Studio',
-    location: 'Islamabad, Pakistan',
-    type: 'Full-time',
-    workplace: 'On-site',
-    experience: 'Entry Level',
-    salary: '$500 - $900 / month',
-    description:
-      'Work with a development team to create and maintain modern business websites.',
-    skills: ['HTML', 'CSS', 'JavaScript', 'React'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 4,
-    title: 'Full Stack Developer',
-    company: 'CloudCore Technologies',
-    location: 'Remote',
-    type: 'Contract',
-    workplace: 'Remote',
-    experience: 'Senior Level',
-    salary: '$2,000 - $3,500 / month',
-    description:
-      'Develop scalable full-stack applications and work with APIs, databases, and cloud services.',
-    skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 5,
-    title: 'Digital Marketing Specialist',
-    company: 'MarketBoost',
-    location: 'Dubai, UAE',
-    type: 'Full-time',
-    workplace: 'Hybrid',
-    experience: 'Mid Level',
-    salary: '$1,500 - $2,500 / month',
-    description:
-      'Manage digital marketing campaigns, SEO initiatives, content strategies, and performance reporting.',
-    skills: ['SEO', 'Google Ads', 'Content Marketing', 'Analytics'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 6,
-    title: 'UI/UX Designer',
-    company: 'Creative Labs',
-    location: 'Remote',
-    type: 'Part-time',
-    workplace: 'Remote',
-    experience: 'Entry Level',
-    salary: '$600 - $1,200 / month',
-    description:
-      'Design intuitive interfaces and user experiences for web and mobile applications.',
-    skills: ['Figma', 'UI Design', 'UX Research', 'Prototyping'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-];
+import { jobs } from '@/data/jobs';
+import type { Application, Job } from '@/types';
 
 const SAVED_JOBS_KEY = 'saved_jobs';
 
@@ -125,7 +26,7 @@ export function JobsPage() {
   const [experience, setExperience] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
 
-  const [savedJobs, setSavedJobs] = useState<number[]>(() => {
+  const [savedJobs, setSavedJobs] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(SAVED_JOBS_KEY);
 
@@ -133,7 +34,9 @@ export function JobsPage() {
 
       const parsed = JSON.parse(stored);
 
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed)
+        ? parsed.filter((id): id is string => typeof id === 'string')
+        : [];
     } catch {
       return [];
     }
@@ -141,7 +44,7 @@ export function JobsPage() {
 
   const { applications, addApplication } = useApplications();
 
-  const toggleSavedJob = (id: number) => {
+  const toggleSavedJob = (id: string) => {
     setSavedJobs((previous) => {
       const next = previous.includes(id)
         ? previous.filter((jobId) => jobId !== id)
@@ -156,9 +59,9 @@ export function JobsPage() {
     });
   };
 
-  const isJobApplied = (jobId: number) => {
+  const isJobApplied = (jobId: string) => {
     return applications.some(
-      (application) => application.jobId === String(jobId)
+      (application) => application.jobId === jobId
     );
   };
 
@@ -168,11 +71,11 @@ export function JobsPage() {
     if (!alreadyApplied) {
       const application: Application = {
         id: `application-${job.id}`,
-        jobId: String(job.id),
+        jobId: job.id,
         title: job.title,
         company: job.company,
         location: job.location,
-        workMode: job.workplace,
+        workMode: job.workMode,
         salary: job.salary,
         appliedDate: new Date().toISOString(),
         status: 'Applied',
@@ -181,8 +84,14 @@ export function JobsPage() {
       addApplication(application);
     }
 
+    /*
+     * The shared Job type does not currently contain
+     * an external application URL.
+     *
+     * For now, open LinkedIn Jobs.
+     */
     window.open(
-      job.url,
+      'https://www.linkedin.com/jobs/',
       '_blank',
       'noopener,noreferrer'
     );
@@ -196,30 +105,36 @@ export function JobsPage() {
       const searchableText = [
         job.title,
         job.company,
+        job.location,
         job.description,
+        job.experienceLevel,
+        job.workMode,
+        job.jobType,
         ...job.skills,
       ]
         .join(' ')
         .toLowerCase();
 
       const matchesSearch =
-        !searchText || searchableText.includes(searchText);
+        !searchText ||
+        searchableText.includes(searchText);
 
       const matchesLocation =
         !locationText ||
-        job.location.toLowerCase().includes(locationText);
+        job.location.toLowerCase().includes(locationText) ||
+        job.workMode.toLowerCase().includes(locationText);
 
       const matchesWorkplace =
         workplace === 'All' ||
-        job.workplace === workplace;
+        job.workMode === workplace;
 
       const matchesType =
         jobType === 'All' ||
-        job.type === jobType;
+        job.jobType === jobType;
 
       const matchesExperience =
         experience === 'All' ||
-        job.experience === experience;
+        job.experienceLevel === experience;
 
       return (
         matchesSearch &&
@@ -269,6 +184,7 @@ export function JobsPage() {
       {/* Search */}
       <div className="card p-4">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_auto]">
+          {/* Search input */}
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
@@ -280,6 +196,7 @@ export function JobsPage() {
             />
           </div>
 
+          {/* Location input */}
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
@@ -291,6 +208,7 @@ export function JobsPage() {
             />
           </div>
 
+          {/* Filter button */}
           <Button
             onClick={() =>
               setShowFilters((value) => !value)
@@ -304,6 +222,7 @@ export function JobsPage() {
         {/* Filters */}
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 sm:grid-cols-3">
+            {/* Workplace */}
             <div>
               <label className="label">
                 Workplace
@@ -323,6 +242,7 @@ export function JobsPage() {
               </select>
             </div>
 
+            {/* Job Type */}
             <div>
               <label className="label">
                 Job Type
@@ -343,6 +263,7 @@ export function JobsPage() {
               </select>
             </div>
 
+            {/* Experience */}
             <div>
               <label className="label">
                 Experience
@@ -356,9 +277,10 @@ export function JobsPage() {
                 }
               >
                 <option>All</option>
-                <option>Entry Level</option>
-                <option>Mid Level</option>
-                <option>Senior Level</option>
+                <option>Entry</option>
+                <option>Mid</option>
+                <option>Senior</option>
+                <option>Lead</option>
               </select>
             </div>
           </div>
@@ -446,18 +368,22 @@ export function JobsPage() {
 
                   <span className="inline-flex items-center gap-1.5">
                     <Briefcase className="h-4 w-4" />
-                    {job.type}
+                    {job.jobType}
                   </span>
                 </div>
 
                 {/* Tags */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
-                    {job.workplace}
+                    {job.workMode}
                   </span>
 
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                    {job.experience}
+                    {job.experienceLevel}
+                  </span>
+
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                    {job.matchScore}% Match
                   </span>
                 </div>
 
@@ -551,7 +477,7 @@ export function JobsPage() {
         </div>
       )}
 
-      {/* Saved Jobs */}
+      {/* Saved Jobs Summary */}
       {savedJobs.length > 0 && (
         <div className="mt-8 rounded-lg border border-primary-100 bg-primary-50 p-4">
           <div className="flex items-center gap-2">
@@ -571,7 +497,7 @@ export function JobsPage() {
         </div>
       )}
 
-      {/* Applications */}
+      {/* Applications Summary */}
       {applications.length > 0 && (
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
           <div className="flex items-center gap-2">
