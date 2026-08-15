@@ -255,11 +255,49 @@ export function ResumePage() {
   // -----------------------------
 
   const improvementSuggestions = [
-    'Add 2-3 quantified metrics to each experience entry (e.g., "reduced load time by 40%").',
-    'Include a certifications section to stand out from other candidates.',
-    'Tailor your summary keywords to match job descriptions you are targeting.',
-    'Add links to live project demos alongside your GitHub repository.',
-  ];
+  ...(resume.summary.trim().length < 50
+    ? ['Write a stronger professional summary with your experience, strengths, and career goal.']
+    : []),
+
+  ...(resume.skills.length < 5
+    ? ['Add more relevant skills. Aim for at least 5-10 skills that match your target jobs.']
+    : []),
+
+  ...(resume.experience.length === 0
+    ? ['Add your work experience, freelance work, internships, or relevant professional experience.']
+    : []),
+
+  ...resume.experience
+    .filter(
+      (exp) =>
+        exp.description.trim().length < 50
+    )
+    .map(() =>
+      'Add measurable achievements to your experience description, such as percentages, revenue, users, or time saved.'
+    ),
+
+  ...(resume.education.length === 0
+    ? ['Add your education history, including your degree, school, and dates.']
+    : []),
+
+  ...(resume.projects.length === 0
+    ? ['Add 2-3 projects with descriptions and live/GitHub links to demonstrate your abilities.']
+    : []),
+
+  ...resume.projects
+    .filter((project) => !project.link.trim())
+    .map(() =>
+      'Add a live demo or GitHub link to your project so employers can view your work.'
+    ),
+
+  ...(resume.fullName.trim() === ''
+    ? ['Add your full name to your resume.']
+    : []),
+
+  ...(resume.email.trim() === ''
+    ? ['Add a professional email address.']
+    : []),
+];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -783,24 +821,34 @@ export function ResumePage() {
         onClose={() => setImproveOpen(false)}
         title="Improvement Suggestions"
       >
-        <div className="space-y-3">
-          {improvementSuggestions.map((suggestion, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2.5"
-            >
-              <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
+       <div className="space-y-3">
+  {improvementSuggestions.length > 0 ? (
+    improvementSuggestions.map((suggestion, i) => (
+      <div
+        key={i}
+        className="flex items-start gap-2.5"
+      >
+        <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
 
-              <span className="text-sm text-slate-600">
-                {suggestion}
-              </span>
-            </div>
-          ))}
+        <span className="text-sm text-slate-600">
+          {suggestion}
+        </span>
+      </div>
+    ))
+  ) : (
+    <div className="rounded-lg bg-green-50 p-4 text-center">
+      <CheckCircle2 className="mx-auto h-6 w-6 text-green-500" />
 
-          <p className="text-xs text-slate-400">
-            Demo suggestions. AI-powered suggestions coming soon.
-          </p>
-        </div>
+      <p className="mt-2 text-sm font-medium text-green-700">
+        Your resume looks great!
+      </p>
+
+      <p className="mt-1 text-xs text-green-600">
+        No major improvements are currently needed.
+      </p>
+    </div>
+  )}
+</div>
       </Modal>
     </div>
   );
