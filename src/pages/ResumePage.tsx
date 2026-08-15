@@ -60,6 +60,24 @@ const removeExperience = (index: number) => {
     experience: resume.experience.filter((_, i) => i !== index),
   });
 };
+  const addEducation = () => {
+  update({
+    education: [
+      ...resume.education,
+      {
+        degree: '',
+        school: '',
+        period: '',
+      },
+    ],
+  });
+};
+
+const removeEducation = (index: number) => {
+  update({
+    education: resume.education.filter((_, i) => i !== index),
+  });
+};
   const handleSave = () => {
     saveToStorage(STORAGE_KEY, resume);
     setSavedMessage(true);
@@ -266,7 +284,21 @@ const removeExperience = (index: number) => {
           <h2 className="text-lg font-semibold text-slate-900">Education</h2>
           <div className="mt-4 space-y-4">
             {resume.education.map((edu, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 p-4">
+  <div key={i} className="rounded-lg border border-slate-200 p-4">
+    <div className="mb-3 flex items-center justify-between">
+      <h3 className="text-sm font-semibold text-slate-700">
+        Education {i + 1}
+      </h3>
+      <button
+        type="button"
+        onClick={() => removeEducation(i)}
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
+        aria-label={`Delete education ${i + 1}`}
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete
+      </button>
+    </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className="label">Degree</label>
@@ -307,9 +339,13 @@ const removeExperience = (index: number) => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
+         <div className="mt-4 flex justify-end">
+  <Button variant="secondary" onClick={addEducation}>
+    <Plus className="h-4 w-4" /> Add Education
+  </Button>
+</div>
+       </div>
+      </div>      
         {/* Projects */}
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">Projects</h2>
