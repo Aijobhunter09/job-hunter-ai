@@ -5,13 +5,13 @@ import { loadFromStorage, saveToStorage } from '@/lib/storage';
 const STORAGE_KEY = 'profile';
 
 const defaultProfile: UserProfile = {
-  name: 'Alex Morgan',
-  jobTitle: 'Senior Frontend Engineer',
-  location: 'San Francisco, CA',
-  experience: '5 years',
-  skills: ['React', 'TypeScript', 'Node.js', 'CSS', 'Git'],
+  name: '',
+  jobTitle: '',
+  location: '',
+  experience: '',
+  skills: [],
   preferredJobType: 'Full-time',
-  preferredLocation: 'Remote',
+  preferredLocation: '',
   remotePreference: 'Open to remote',
 };
 
