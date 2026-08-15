@@ -364,75 +364,91 @@ const removeProject = (index: number) => {
 </div>
        </div>
       </div>      
-        {/* Projects */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-slate-900">Projects</h2>
-          <div className="mt-4 space-y-4">
-            {resume.projects.map((proj, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 p-4">
-                <div className="mb-3 flex items-center justify-between">
-  <h3 className="text-sm font-semibold text-slate-700">
-    Project {i + 1}
-  </h3>
+       {/* Projects */}
+<div className="card p-6">
+  <h2 className="text-lg font-semibold text-slate-900">Projects</h2>
 
-  <button
-    type="button"
-    onClick={() => removeProject(i)}
-    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
-  >
-    <Trash2 className="h-4 w-4" />
-    Delete
-  </button>
-</div>
-                <div className="mt-4 flex justify-end">
-  <Button variant="secondary" onClick={addProject}>
-    <Plus className="h-4 w-4" /> Add Project
-  </Button>
-</div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="label">Project Name</label>
-                    <input
-                      className="input"
-                      value={proj.name}
-                      onChange={(e) => {
-                        const next = [...resume.projects];
-                        next[i] = { ...proj, name: e.target.value };
-                        update({ projects: next });
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label className="label">Link</label>
-                    <input
-                      className="input"
-                      value={proj.link}
-                      onChange={(e) => {
-                        const next = [...resume.projects];
-                        next[i] = { ...proj, link: e.target.value };
-                        update({ projects: next });
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <label className="label">Description</label>
-                  <textarea
-                    className="input min-h-[60px] resize-y"
-                    value={proj.description}
-                    onChange={(e) => {
-                      const next = [...resume.projects];
-                      next[i] = { ...proj, description: e.target.value };
-                      update({ projects: next });
-                    }}
-                    rows={2}
-                  />
-                </div>
-              </div>
-            ))}
+  <div className="mt-4 space-y-4">
+    {resume.projects.map((proj, i) => (
+      <div
+        key={i}
+        className="rounded-lg border border-slate-200 p-4"
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">
+            Project {i + 1}
+          </h3>
+
+          <button
+            type="button"
+            onClick={() => removeProject(i)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="label">Project Name</label>
+            <input
+              className="input"
+              value={proj.name}
+              onChange={(e) => {
+                const next = [...resume.projects];
+                next[i] = {
+                  ...proj,
+                  name: e.target.value,
+                };
+                update({ projects: next });
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="label">Link</label>
+            <input
+              className="input"
+              value={proj.link}
+              onChange={(e) => {
+                const next = [...resume.projects];
+                next[i] = {
+                  ...proj,
+                  link: e.target.value,
+                };
+                update({ projects: next });
+              }}
+            />
           </div>
         </div>
+
+        <div className="mt-3">
+          <label className="label">Description</label>
+          <textarea
+            className="input min-h-[60px] resize-y"
+            value={proj.description}
+            onChange={(e) => {
+              const next = [...resume.projects];
+              next[i] = {
+                ...proj,
+                description: e.target.value,
+              };
+              update({ projects: next });
+            }}
+            rows={2}
+          />
+        </div>
       </div>
+    ))}
+  </div>
+
+  <div className="mt-4 flex justify-end">
+    <Button variant="secondary" onClick={addProject}>
+      <Plus className="h-4 w-4" /> Add Project
+    </Button>
+  </div>
+</div>
 
       {/* Analysis modal */}
       <Modal open={analysisOpen} onClose={() => setAnalysisOpen(false)} title="Resume Analysis">
