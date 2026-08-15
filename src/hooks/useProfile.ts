@@ -13,6 +13,8 @@ const defaultProfile: UserProfile = {
   preferredJobType: 'Full-time',
   preferredLocation: '',
   remotePreference: 'Open to remote',
+  linkedinUrl: '',
+portfolioUrl: '',
 };
 
 export function useProfile() {
