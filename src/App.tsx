@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer';
 import { HomePage } from '@/pages/HomePage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { JobsPage } from '@/pages/JobsPage';
+import { SavedJobsPage } from '@/pages/SavedJobsPage';
 import { JobDetailsPage } from '@/pages/JobDetailsPage';
 import { ResumePage } from '@/pages/ResumePage';
 import { ApplicationsPage } from '@/pages/ApplicationsPage';
