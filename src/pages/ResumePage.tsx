@@ -9,32 +9,14 @@ import { loadFromStorage, saveToStorage } from '@/lib/storage';
 const STORAGE_KEY = 'resume';
 
 const defaultResume: ResumeData = {
-  fullName: 'Alex Morgan',
-  email: 'alex.morgan@example.com',
-  phone: '(555) 123-4567',
-  summary:
-    'Senior Frontend Engineer with 5+ years building accessible, performant web applications. Passionate about clean code, design systems, and user experience.',
-  skills: ['React', 'TypeScript', 'Node.js', 'CSS', 'Git', 'Jest'],
-  experience: [
-    {
-      role: 'Senior Frontend Engineer',
-      company: 'TechCorp',
-      period: '2022 - Present',
-      description: 'Led frontend architecture for a B2B SaaS platform serving 50k+ users.',
-    },
-    {
-      role: 'Frontend Developer',
-      company: 'StartupInc',
-      period: '2019 - 2022',
-      description: 'Built and maintained React components and design system.',
-    },
-  ],
-  education: [
-    { degree: 'B.S. Computer Science', school: 'State University', period: '2015 - 2019' },
-  ],
-  projects: [
-    { name: 'OpenSource UI Kit', description: 'A React component library with 1k+ GitHub stars.', link: 'github.com/alex/ui-kit' },
-  ],
+  fullName: '',
+  email: '',
+  phone: '',
+  summary: '',
+  skills: [],
+  experience: [],
+  education: [],
+  projects: [],
 };
 
 export function ResumePage() {
