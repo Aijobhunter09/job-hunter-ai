@@ -31,6 +31,8 @@ const profileFields = [
   profile.experience,
   profile.skills.length > 0 ? 'skills' : '',
   profile.preferredLocation,
+  profile.linkedinUrl,
+  profile.portfolioUrl,
 ];
 
 const completedFields = profileFields.filter((field) => field.trim().length > 0).length;
