@@ -14,15 +14,47 @@ export function useApplications() {
     saveToStorage(STORAGE_KEY, applications);
   }, [applications]);
 
-  const moveApplication = useCallback((id: string, newStatus: Application['status']) => {
+  const addApplication = useCallback(
+    (application: Application) => {
+      setApplications((prev) => {
+        // Prevent duplicate applications for the same job
+        const alreadyExists = prev.some(
+          (app) => app.id === application.id
+        );
+
+        if (alreadyExists) {
+          return prev;
+        }
+
+        return [...prev, application];
+      });
+    },
+    []
+  );
+
+  const moveApplication = useCallback(
+    (id: string, newStatus: Application['status']) => {
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === id
+            ? { ...app, status: newStatus }
+            : app
+        )
+      );
+    },
+    []
+  );
+
+  const removeApplication = useCallback((id: string) => {
     setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status: newStatus } : app))
+      prev.filter((app) => app.id !== id)
     );
   }, []);
 
-  const removeApplication = useCallback((id: string) => {
-    setApplications((prev) => prev.filter((app) => app.id !== id));
-  }, []);
-
-  return { applications, moveApplication, removeApplication };
+  return {
+    applications,
+    addApplication,
+    moveApplication,
+    removeApplication,
+  };
 }
