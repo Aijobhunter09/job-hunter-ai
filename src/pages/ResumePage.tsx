@@ -205,32 +205,50 @@ export function ResumePage() {
   // Analysis
   // -----------------------------
 
-  const analysisResults = [
-    {
-      type: 'good',
-      text: 'Strong professional summary with clear value proposition.',
-    },
-    {
-      type: 'good',
-      text: 'Good use of quantified achievements in experience.',
-    },
-    {
-      type: 'good',
-      text: 'Skills section covers relevant, in-demand technologies.',
-    },
-    {
-      type: 'warn',
-      text: 'Consider adding metrics to your second role description.',
-    },
-    {
-      type: 'warn',
-      text: 'Add a LinkedIn profile link for better visibility.',
-    },
-    {
-      type: 'good',
-      text: 'Clean formatting with clear section hierarchy.',
-    },
-  ];
+ const analysisResults = [
+  {
+    type: resume.fullName && resume.email && resume.phone ? 'good' : 'warn',
+    text:
+      resume.fullName && resume.email && resume.phone
+        ? 'Personal information is complete.'
+        : 'Complete your name, email, and phone number.',
+  },
+  {
+    type: resume.summary.trim().length >= 50 ? 'good' : 'warn',
+    text:
+      resume.summary.trim().length >= 50
+        ? 'Professional summary has good detail.'
+        : 'Add a professional summary of at least 50 characters.',
+  },
+  {
+    type: resume.skills.length >= 5 ? 'good' : 'warn',
+    text:
+      resume.skills.length >= 5
+        ? 'Good number of relevant skills added.'
+        : 'Add at least 5 relevant skills.',
+  },
+  {
+    type: resume.experience.length > 0 ? 'good' : 'warn',
+    text:
+      resume.experience.length > 0
+        ? 'Experience section has been added.'
+        : 'Add at least one experience entry.',
+  },
+  {
+    type: resume.education.length > 0 ? 'good' : 'warn',
+    text:
+      resume.education.length > 0
+        ? 'Education information has been added.'
+        : 'Add your education history.',
+  },
+  {
+    type: resume.projects.length > 0 ? 'good' : 'warn',
+    text:
+      resume.projects.length > 0
+        ? 'Project section contains at least one project.'
+        : 'Add projects to demonstrate your practical experience.',
+  },
+];
 
   // -----------------------------
   // Improvement Suggestions
@@ -737,8 +755,20 @@ export function ResumePage() {
             </p>
 
             <p className="text-2xl font-bold text-primary-700">
-              88%
-            </p>
+  {Math.round(
+    (
+      [
+        resume.fullName && resume.email && resume.phone,
+        resume.summary.trim().length >= 50,
+        resume.skills.length >= 5,
+        resume.experience.length > 0,
+        resume.education.length > 0,
+        resume.projects.length > 0,
+      ].filter(Boolean).length / 6
+    ) * 100
+  )}
+%
+</p>
           </div>
 
           <p className="text-xs text-slate-400">
