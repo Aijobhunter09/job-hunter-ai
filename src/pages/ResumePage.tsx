@@ -35,6 +35,7 @@ export function ResumePage() {
   const [savedMessage, setSavedMessage] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [improveOpen, setImproveOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const update = (updates: Partial<ResumeData>) => {
     setResume((prev) => ({ ...prev, ...updates }));
@@ -416,7 +417,12 @@ export function ResumePage() {
             <TrendingUp className="h-4 w-4" />
             Improve Resume
           </Button>
-
+<Button
+  variant="secondary"
+  onClick={() => setPreviewOpen(true)}
+>
+  Preview Resume
+</Button>
           <Button onClick={handleSave}>
             <Save className="h-4 w-4" />
             Save Resume
@@ -1032,6 +1038,179 @@ export function ResumePage() {
           </p>
         </div>
       </Modal>
+      {/* =========================
+    RESUME PREVIEW MODAL
+========================= */}
+
+<Modal
+  open={previewOpen}
+  onClose={() => setPreviewOpen(false)}
+  title="Resume Preview"
+>
+  <div className="max-h-[75vh] overflow-y-auto rounded-lg bg-white p-6">
+    {/* Header */}
+    <div className="border-b border-slate-200 pb-5">
+      <h1 className="text-2xl font-bold text-slate-900">
+        {resume.fullName || 'Your Name'}
+      </h1>
+
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+        {resume.email && <span>{resume.email}</span>}
+        {resume.phone && <span>{resume.phone}</span>}
+      </div>
+    </div>
+
+    {/* Summary */}
+    {resume.summary && (
+      <section className="mt-6">
+        <h2 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+          Professional Summary
+        </h2>
+
+        <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">
+          {resume.summary}
+        </p>
+      </section>
+    )}
+
+    {/* Skills */}
+    {resume.skills.length > 0 && (
+      <section className="mt-6">
+        <h2 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+          Skills
+        </h2>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {resume.skills.map((skill) => (
+            <span
+              key={skill}
+              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Experience */}
+    {resume.experience.length > 0 && (
+      <section className="mt-6">
+        <h2 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+          Experience
+        </h2>
+
+        <div className="mt-4 space-y-5">
+          {resume.experience.map((exp, i) => (
+            <div key={i}>
+              <div className="flex flex-col justify-between sm:flex-row">
+                <div>
+                  <h3 className="font-semibold text-slate-900">
+                    {exp.role || 'Role'}
+                  </h3>
+
+                  <p className="text-sm text-slate-500">
+                    {exp.company || 'Company'}
+                  </p>
+                </div>
+
+                {exp.period && (
+                  <span className="mt-1 text-xs text-slate-400 sm:mt-0">
+                    {exp.period}
+                  </span>
+                )}
+              </div>
+
+              {exp.description && (
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                  {exp.description}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Education */}
+    {resume.education.length > 0 && (
+      <section className="mt-6">
+        <h2 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+          Education
+        </h2>
+
+        <div className="mt-4 space-y-4">
+          {resume.education.map((edu, i) => (
+            <div key={i}>
+              <div className="flex flex-col justify-between sm:flex-row">
+                <div>
+                  <h3 className="font-semibold text-slate-900">
+                    {edu.degree || 'Degree'}
+                  </h3>
+
+                  <p className="text-sm text-slate-500">
+                    {edu.school || 'School'}
+                  </p>
+                </div>
+
+                {edu.period && (
+                  <span className="mt-1 text-xs text-slate-400 sm:mt-0">
+                    {edu.period}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Projects */}
+    {resume.projects.length > 0 && (
+      <section className="mt-6">
+        <h2 className="border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-900">
+          Projects
+        </h2>
+
+        <div className="mt-4 space-y-5">
+          {resume.projects.map((project, i) => (
+            <div key={i}>
+              <h3 className="font-semibold text-slate-900">
+                {project.name || 'Project'}
+              </h3>
+
+              {project.link && (
+                <p className="mt-1 break-all text-xs text-primary-600">
+                  {project.link}
+                </p>
+              )}
+
+              {project.description && (
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">
+                  {project.description}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Empty state */}
+    {!resume.fullName &&
+      !resume.summary &&
+      resume.skills.length === 0 &&
+      resume.experience.length === 0 &&
+      resume.education.length === 0 &&
+      resume.projects.length === 0 && (
+        <div className="py-12 text-center">
+          <p className="text-sm text-slate-500">
+            Start filling out your resume to see the preview here.
+          </p>
+        </div>
+      )}
+  </div>
+</Modal>
     </div>
   );
 }
