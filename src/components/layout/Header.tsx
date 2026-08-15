@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { label: 'Jobs', path: '/jobs' },
+  { label: 'Saved Jobs', path: '/saved-jobs' },
   { label: 'Resume', path: '/resume' },
   { label: 'Applications', path: '/applications' },
   { label: 'Interview Prep', path: '/interview' },
