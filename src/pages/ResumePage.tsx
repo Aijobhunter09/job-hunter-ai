@@ -78,6 +78,24 @@ const removeEducation = (index: number) => {
     education: resume.education.filter((_, i) => i !== index),
   });
 };
+  const addProject = () => {
+  update({
+    projects: [
+      ...resume.projects,
+      {
+        name: '',
+        description: '',
+        link: '',
+      },
+    ],
+  });
+};
+
+const removeProject = (index: number) => {
+  update({
+    projects: resume.projects.filter((_, i) => i !== index),
+  });
+};
   const handleSave = () => {
     saveToStorage(STORAGE_KEY, resume);
     setSavedMessage(true);
@@ -352,6 +370,25 @@ const removeEducation = (index: number) => {
           <div className="mt-4 space-y-4">
             {resume.projects.map((proj, i) => (
               <div key={i} className="rounded-lg border border-slate-200 p-4">
+                <div className="mb-3 flex items-center justify-between">
+  <h3 className="text-sm font-semibold text-slate-700">
+    Project {i + 1}
+  </h3>
+
+  <button
+    type="button"
+    onClick={() => removeProject(i)}
+    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
+  >
+    <Trash2 className="h-4 w-4" />
+    Delete
+  </button>
+</div>
+                <div className="mt-4 flex justify-end">
+  <Button variant="secondary" onClick={addProject}>
+    <Plus className="h-4 w-4" /> Add Project
+  </Button>
+</div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className="label">Project Name</label>
