@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
-
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import type { ResumeData } from '@/types';
@@ -38,15 +37,12 @@ export function ResumePage() {
   const [improveOpen, setImproveOpen] = useState(false);
 
   const update = (updates: Partial<ResumeData>) => {
-    setResume((prev) => ({
-      ...prev,
-      ...updates,
-    }));
+    setResume((prev) => ({ ...prev, ...updates }));
   };
 
-  // -----------------------------
-  // Skills
-  // -----------------------------
+  /* =========================
+     SKILLS
+  ========================= */
 
   const addSkill = () => {
     const skill = newSkill.trim();
@@ -66,9 +62,9 @@ export function ResumePage() {
     });
   };
 
-  // -----------------------------
-  // Experience
-  // -----------------------------
+  /* =========================
+     EXPERIENCE
+  ========================= */
 
   const addExperience = () => {
     update({
@@ -90,26 +86,9 @@ export function ResumePage() {
     });
   };
 
-  const updateExperience = (
-    index: number,
-    field: 'role' | 'company' | 'period' | 'description',
-    value: string
-  ) => {
-    const next = [...resume.experience];
-
-    next[index] = {
-      ...next[index],
-      [field]: value,
-    };
-
-    update({
-      experience: next,
-    });
-  };
-
-  // -----------------------------
-  // Education
-  // -----------------------------
+  /* =========================
+     EDUCATION
+  ========================= */
 
   const addEducation = () => {
     update({
@@ -130,26 +109,9 @@ export function ResumePage() {
     });
   };
 
-  const updateEducation = (
-    index: number,
-    field: 'degree' | 'school' | 'period',
-    value: string
-  ) => {
-    const next = [...resume.education];
-
-    next[index] = {
-      ...next[index],
-      [field]: value,
-    };
-
-    update({
-      education: next,
-    });
-  };
-
-  // -----------------------------
-  // Projects
-  // -----------------------------
+  /* =========================
+     PROJECTS
+  ========================= */
 
   const addProject = () => {
     update({
@@ -170,26 +132,9 @@ export function ResumePage() {
     });
   };
 
-  const updateProject = (
-    index: number,
-    field: 'name' | 'description' | 'link',
-    value: string
-  ) => {
-    const next = [...resume.projects];
-
-    next[index] = {
-      ...next[index],
-      [field]: value,
-    };
-
-    update({
-      projects: next,
-    });
-  };
-
-  // -----------------------------
-  // Save
-  // -----------------------------
+  /* =========================
+     SAVE
+  ========================= */
 
   const handleSave = () => {
     saveToStorage(STORAGE_KEY, resume);
@@ -201,107 +146,249 @@ export function ResumePage() {
     }, 2500);
   };
 
-  // -----------------------------
-  // Analysis
-  // -----------------------------
+  /* =========================
+     RESUME ANALYSIS
+  ========================= */
 
- const analysisResults = [
-  {
-    type: resume.fullName && resume.email && resume.phone ? 'good' : 'warn',
-    text:
-      resume.fullName && resume.email && resume.phone
-        ? 'Personal information is complete.'
-        : 'Complete your name, email, and phone number.',
-  },
-  {
-    type: resume.summary.trim().length >= 50 ? 'good' : 'warn',
-    text:
-      resume.summary.trim().length >= 50
-        ? 'Professional summary has good detail.'
-        : 'Add a professional summary of at least 50 characters.',
-  },
-  {
-    type: resume.skills.length >= 5 ? 'good' : 'warn',
-    text:
-      resume.skills.length >= 5
-        ? 'Good number of relevant skills added.'
-        : 'Add at least 5 relevant skills.',
-  },
-  {
-    type: resume.experience.length > 0 ? 'good' : 'warn',
-    text:
-      resume.experience.length > 0
-        ? 'Experience section has been added.'
-        : 'Add at least one experience entry.',
-  },
-  {
-    type: resume.education.length > 0 ? 'good' : 'warn',
-    text:
-      resume.education.length > 0
-        ? 'Education information has been added.'
-        : 'Add your education history.',
-  },
-  {
-    type: resume.projects.length > 0 ? 'good' : 'warn',
-    text:
-      resume.projects.length > 0
-        ? 'Project section contains at least one project.'
-        : 'Add projects to demonstrate your practical experience.',
-  },
-];
+  const getAnalysisResults = () => {
+    const results: {
+      type: 'good' | 'warn';
+      text: string;
+    }[] = [];
 
-  // -----------------------------
-  // Improvement Suggestions
-  // -----------------------------
+    if (resume.fullName.trim()) {
+      results.push({
+        type: 'good',
+        text: 'Your full name is provided.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Add your full name to your resume.',
+      });
+    }
 
-  const improvementSuggestions = [
-  ...(resume.summary.trim().length < 50
-    ? ['Write a stronger professional summary with your experience, strengths, and career goal.']
-    : []),
+    if (resume.email.trim()) {
+      results.push({
+        type: 'good',
+        text: 'Email address is provided.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Add a professional email address.',
+      });
+    }
 
-  ...(resume.skills.length < 5
-    ? ['Add more relevant skills. Aim for at least 5-10 skills that match your target jobs.']
-    : []),
+    if (resume.summary.trim().length >= 80) {
+      results.push({
+        type: 'good',
+        text: 'Your professional summary has useful detail.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Expand your professional summary to clearly explain your value.',
+      });
+    }
 
-  ...(resume.experience.length === 0
-    ? ['Add your work experience, freelance work, internships, or relevant professional experience.']
-    : []),
+    if (resume.skills.length >= 5) {
+      results.push({
+        type: 'good',
+        text: 'Your resume contains a good number of skills.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Add more relevant skills. Aim for at least 5–8 skills.',
+      });
+    }
 
-  ...resume.experience
-    .filter(
-      (exp) =>
-        exp.description.trim().length < 50
-    )
-    .map(() =>
-      'Add measurable achievements to your experience description, such as percentages, revenue, users, or time saved.'
-    ),
+    if (resume.experience.length > 0) {
+      results.push({
+        type: 'good',
+        text: 'Experience section has been added.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Add relevant work or freelance experience.',
+      });
+    }
 
-  ...(resume.education.length === 0
-    ? ['Add your education history, including your degree, school, and dates.']
-    : []),
+    if (resume.education.length > 0) {
+      results.push({
+        type: 'good',
+        text: 'Education information is included.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Add your education information.',
+      });
+    }
 
-  ...(resume.projects.length === 0
-    ? ['Add 2-3 projects with descriptions and live/GitHub links to demonstrate your abilities.']
-    : []),
+    if (resume.projects.length > 0) {
+      results.push({
+        type: 'good',
+        text: 'Projects section contains at least one project.',
+      });
+    } else {
+      results.push({
+        type: 'warn',
+        text: 'Add projects to demonstrate your practical skills.',
+      });
+    }
 
-  ...resume.projects
-    .filter((project) => !project.link.trim())
-    .map(() =>
-      'Add a live demo or GitHub link to your project so employers can view your work.'
-    ),
+    const experienceWithMetrics = resume.experience.some((exp) =>
+      /\d+%|\d+\+|\$\d+|\d+\s*(users|clients|projects|leads|sales)/i.test(
+        exp.description
+      )
+    );
 
-  ...(resume.fullName.trim() === ''
-    ? ['Add your full name to your resume.']
-    : []),
+    if (experienceWithMetrics) {
+      results.push({
+        type: 'good',
+        text: 'Your experience includes measurable achievements.',
+      });
+    } else if (resume.experience.length > 0) {
+      results.push({
+        type: 'warn',
+        text: 'Add numbers and measurable achievements to your experience descriptions.',
+      });
+    }
 
-  ...(resume.email.trim() === ''
-    ? ['Add a professional email address.']
-    : []),
-];
+    return results;
+  };
+
+  const analysisResults = getAnalysisResults();
+
+  const goodCount = analysisResults.filter(
+    (item) => item.type === 'good'
+  ).length;
+
+  const resumeScore =
+    analysisResults.length > 0
+      ? Math.round((goodCount / analysisResults.length) * 100)
+      : 0;
+
+  /* =========================
+     DYNAMIC IMPROVEMENTS
+  ========================= */
+
+  const getImprovementSuggestions = () => {
+    const suggestions: string[] = [];
+
+    if (!resume.fullName.trim()) {
+      suggestions.push(
+        'Add your full name at the top of your resume.'
+      );
+    }
+
+    if (!resume.email.trim()) {
+      suggestions.push(
+        'Add a professional email address so employers can contact you.'
+      );
+    }
+
+    if (!resume.phone.trim()) {
+      suggestions.push(
+        'Add a phone number if you are comfortable being contacted by phone.'
+      );
+    }
+
+    if (resume.summary.trim().length < 80) {
+      suggestions.push(
+        'Improve your professional summary. Explain your main skills, experience, specialization, and the value you can provide to an employer.'
+      );
+    }
+
+    if (resume.skills.length < 5) {
+      suggestions.push(
+        'Add more relevant skills. Try to include at least 5–8 skills that match the jobs you are targeting.'
+      );
+    }
+
+    if (resume.experience.length === 0) {
+      suggestions.push(
+        'Add work, freelance, internship, or relevant practical experience.'
+      );
+    }
+
+    resume.experience.forEach((exp, index) => {
+      if (!exp.role.trim() || !exp.company.trim()) {
+        suggestions.push(
+          `Complete the role and company information for Experience ${index + 1}.`
+        );
+      }
+
+      if (exp.description.trim().length < 80) {
+        suggestions.push(
+          `Expand the description for Experience ${index + 1}. Focus on responsibilities, achievements, and results.`
+        );
+      }
+
+      if (
+        exp.description.trim() &&
+        !/\d+%|\d+\+|\$\d+|\d+\s*(users|clients|projects|leads|sales)/i.test(
+          exp.description
+        )
+      ) {
+        suggestions.push(
+          `Add measurable results to Experience ${index + 1}, such as percentages, number of clients, projects completed, traffic growth, or time saved.`
+        );
+      }
+    });
+
+    if (resume.education.length === 0) {
+      suggestions.push(
+        'Add your education details, including degree, institution, and dates.'
+      );
+    }
+
+    if (resume.projects.length === 0) {
+      suggestions.push(
+        'Add 2–3 relevant projects to demonstrate your practical abilities.'
+      );
+    }
+
+    resume.projects.forEach((project, index) => {
+      if (!project.name.trim()) {
+        suggestions.push(
+          `Add a name for Project ${index + 1}.`
+        );
+      }
+
+      if (project.description.trim().length < 50) {
+        suggestions.push(
+          `Write a stronger description for Project ${index + 1}. Explain what you built, which technologies you used, and the result.`
+        );
+      }
+
+      if (!project.link.trim()) {
+        suggestions.push(
+          `Consider adding a live demo, GitHub repository, or portfolio link for Project ${index + 1}.`
+        );
+      }
+    });
+
+    if (suggestions.length === 0) {
+      suggestions.push(
+        'Your resume looks well structured. Continue tailoring your keywords and achievements to each job description.'
+      );
+    }
+
+    return suggestions;
+  };
+
+  const improvementSuggestions = getImprovementSuggestions();
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Header */}
+      {/* =========================
+          HEADER
+      ========================= */}
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
@@ -337,7 +424,10 @@ export function ResumePage() {
         </div>
       </div>
 
-      {/* Save message */}
+      {/* =========================
+          SAVE MESSAGE
+      ========================= */}
+
       {savedMessage && (
         <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm font-medium text-green-700 animate-slide-up">
           <CheckCircle2 className="h-4 w-4" />
@@ -346,7 +436,10 @@ export function ResumePage() {
       )}
 
       <div className="space-y-6">
-        {/* Personal Information */}
+        {/* =========================
+            PERSONAL INFORMATION
+        ========================= */}
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Personal Information
@@ -360,9 +453,7 @@ export function ResumePage() {
                 className="input"
                 value={resume.fullName}
                 onChange={(e) =>
-                  update({
-                    fullName: e.target.value,
-                  })
+                  update({ fullName: e.target.value })
                 }
               />
             </div>
@@ -375,9 +466,7 @@ export function ResumePage() {
                 type="email"
                 value={resume.email}
                 onChange={(e) =>
-                  update({
-                    email: e.target.value,
-                  })
+                  update({ email: e.target.value })
                 }
               />
             </div>
@@ -389,16 +478,17 @@ export function ResumePage() {
                 className="input"
                 value={resume.phone}
                 onChange={(e) =>
-                  update({
-                    phone: e.target.value,
-                  })
+                  update({ phone: e.target.value })
                 }
               />
             </div>
           </div>
         </div>
 
-        {/* Professional Summary */}
+        {/* =========================
+            SUMMARY
+        ========================= */}
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Professional Summary
@@ -408,15 +498,17 @@ export function ResumePage() {
             className="input mt-3 min-h-[100px] resize-y"
             value={resume.summary}
             onChange={(e) =>
-              update({
-                summary: e.target.value,
-              })
+              update({ summary: e.target.value })
             }
             rows={4}
+            placeholder="Write a short professional summary..."
           />
         </div>
 
-        {/* Skills */}
+        {/* =========================
+            SKILLS
+        ========================= */}
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Skills
@@ -446,7 +538,9 @@ export function ResumePage() {
             <input
               className="input"
               value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
+              onChange={(e) =>
+                setNewSkill(e.target.value)
+              }
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   addSkill();
@@ -455,14 +549,20 @@ export function ResumePage() {
               placeholder="Add a skill..."
             />
 
-            <Button variant="secondary" onClick={addSkill}>
+            <Button
+              variant="secondary"
+              onClick={addSkill}
+            >
               <Plus className="h-4 w-4" />
               Add
             </Button>
           </div>
         </div>
 
-        {/* Experience */}
+        {/* =========================
+            EXPERIENCE
+        ========================= */}
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Experience
@@ -481,9 +581,10 @@ export function ResumePage() {
 
                   <button
                     type="button"
-                    onClick={() => removeExperience(i)}
+                    onClick={() =>
+                      removeExperience(i)
+                    }
                     className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                    aria-label={`Delete experience ${i + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete
@@ -497,13 +598,20 @@ export function ResumePage() {
                     <input
                       className="input"
                       value={exp.role}
-                      onChange={(e) =>
-                        updateExperience(
-                          i,
-                          'role',
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.experience,
+                        ];
+
+                        next[i] = {
+                          ...exp,
+                          role: e.target.value,
+                        };
+
+                        update({
+                          experience: next,
+                        });
+                      }}
                     />
                   </div>
 
@@ -513,13 +621,20 @@ export function ResumePage() {
                     <input
                       className="input"
                       value={exp.company}
-                      onChange={(e) =>
-                        updateExperience(
-                          i,
-                          'company',
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.experience,
+                        ];
+
+                        next[i] = {
+                          ...exp,
+                          company: e.target.value,
+                        };
+
+                        update({
+                          experience: next,
+                        });
+                      }}
                     />
                   </div>
 
@@ -529,31 +644,48 @@ export function ResumePage() {
                     <input
                       className="input"
                       value={exp.period}
-                      onChange={(e) =>
-                        updateExperience(
-                          i,
-                          'period',
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.experience,
+                        ];
+
+                        next[i] = {
+                          ...exp,
+                          period: e.target.value,
+                        };
+
+                        update({
+                          experience: next,
+                        });
+                      }}
                     />
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <label className="label">Description</label>
+                  <label className="label">
+                    Description
+                  </label>
 
                   <textarea
                     className="input min-h-[60px] resize-y"
                     value={exp.description}
-                    onChange={(e) =>
-                      updateExperience(
-                        i,
-                        'description',
-                        e.target.value
-                      )
-                    }
-                    rows={2}
+                    onChange={(e) => {
+                      const next = [
+                        ...resume.experience,
+                      ];
+
+                      next[i] = {
+                        ...exp,
+                        description: e.target.value,
+                      };
+
+                      update({
+                        experience: next,
+                      });
+                    }}
+                    rows={3}
+                    placeholder="Describe your responsibilities and achievements..."
                   />
                 </div>
               </div>
@@ -571,7 +703,10 @@ export function ResumePage() {
           </div>
         </div>
 
-        {/* Education */}
+        {/* =========================
+            EDUCATION
+        ========================= */}
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Education
@@ -590,9 +725,10 @@ export function ResumePage() {
 
                   <button
                     type="button"
-                    onClick={() => removeEducation(i)}
+                    onClick={() =>
+                      removeEducation(i)
+                    }
                     className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                    aria-label={`Delete education ${i + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete
@@ -606,13 +742,20 @@ export function ResumePage() {
                     <input
                       className="input"
                       value={edu.degree}
-                      onChange={(e) =>
-                        updateEducation(
-                          i,
-                          'degree',
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.education,
+                        ];
+
+                        next[i] = {
+                          ...edu,
+                          degree: e.target.value,
+                        };
+
+                        update({
+                          education: next,
+                        });
+                      }}
                     />
                   </div>
 
@@ -622,13 +765,20 @@ export function ResumePage() {
                     <input
                       className="input"
                       value={edu.school}
-                      onChange={(e) =>
-                        updateEducation(
-                          i,
-                          'school',
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.education,
+                        ];
+
+                        next[i] = {
+                          ...edu,
+                          school: e.target.value,
+                        };
+
+                        update({
+                          education: next,
+                        });
+                      }}
                     />
                   </div>
 
@@ -638,13 +788,20 @@ export function ResumePage() {
                     <input
                       className="input"
                       value={edu.period}
-                      onChange={(e) =>
-                        updateEducation(
-                          i,
-                          'period',
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.education,
+                        ];
+
+                        next[i] = {
+                          ...edu,
+                          period: e.target.value,
+                        };
+
+                        update({
+                          education: next,
+                        });
+                      }}
                     />
                   </div>
                 </div>
@@ -663,14 +820,17 @@ export function ResumePage() {
           </div>
         </div>
 
-        {/* Projects */}
+        {/* =========================
+            PROJECTS
+        ========================= */}
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-slate-900">
             Projects
           </h2>
 
           <div className="mt-4 space-y-4">
-            {resume.projects.map((project, i) => (
+            {resume.projects.map((proj, i) => (
               <div
                 key={i}
                 className="rounded-lg border border-slate-200 p-4"
@@ -682,9 +842,10 @@ export function ResumePage() {
 
                   <button
                     type="button"
-                    onClick={() => removeProject(i)}
+                    onClick={() =>
+                      removeProject(i)
+                    }
                     className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
-                    aria-label={`Delete project ${i + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete
@@ -699,32 +860,47 @@ export function ResumePage() {
 
                     <input
                       className="input"
-                      value={project.name}
-                      onChange={(e) =>
-                        updateProject(
-                          i,
-                          'name',
-                          e.target.value
-                        )
-                      }
+                      value={proj.name}
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.projects,
+                        ];
+
+                        next[i] = {
+                          ...proj,
+                          name: e.target.value,
+                        };
+
+                        update({
+                          projects: next,
+                        });
+                      }}
                     />
                   </div>
 
                   <div>
-                    <label className="label">Link</label>
+                    <label className="label">
+                      Link
+                    </label>
 
                     <input
                       className="input"
-                      type="url"
+                      value={proj.link}
+                      onChange={(e) => {
+                        const next = [
+                          ...resume.projects,
+                        ];
+
+                        next[i] = {
+                          ...proj,
+                          link: e.target.value,
+                        };
+
+                        update({
+                          projects: next,
+                        });
+                      }}
                       placeholder="https://..."
-                      value={project.link}
-                      onChange={(e) =>
-                        updateProject(
-                          i,
-                          'link',
-                          e.target.value
-                        )
-                      }
                     />
                   </div>
                 </div>
@@ -736,15 +912,23 @@ export function ResumePage() {
 
                   <textarea
                     className="input min-h-[60px] resize-y"
-                    value={project.description}
-                    onChange={(e) =>
-                      updateProject(
-                        i,
-                        'description',
-                        e.target.value
-                      )
-                    }
-                    rows={2}
+                    value={proj.description}
+                    onChange={(e) => {
+                      const next = [
+                        ...resume.projects,
+                      ];
+
+                      next[i] = {
+                        ...proj,
+                        description: e.target.value,
+                      };
+
+                      update({
+                        projects: next,
+                      });
+                    }}
+                    rows={3}
+                    placeholder="Describe the project, technologies used, and results..."
                   />
                 </div>
               </div>
@@ -763,7 +947,10 @@ export function ResumePage() {
         </div>
       </div>
 
-      {/* Resume Analysis Modal */}
+      {/* =========================
+          ANALYZE RESUME MODAL
+      ========================= */}
+
       <Modal
         open={analysisOpen}
         onClose={() => setAnalysisOpen(false)}
@@ -787,68 +974,63 @@ export function ResumePage() {
             </div>
           ))}
 
-          <div className="mt-4 rounded-lg bg-primary-50 p-3 text-center">
+          <div className="mt-4 rounded-lg bg-primary-50 p-4 text-center">
             <p className="text-sm text-slate-600">
               Resume Strength
             </p>
 
-            <p className="text-2xl font-bold text-primary-700">
-  {Math.round(
-    (
-      [
-        resume.fullName && resume.email && resume.phone,
-        resume.summary.trim().length >= 50,
-        resume.skills.length >= 5,
-        resume.experience.length > 0,
-        resume.education.length > 0,
-        resume.projects.length > 0,
-      ].filter(Boolean).length / 6
-    ) * 100
-  )}
-%
-</p>
+            <p className="text-3xl font-bold text-primary-700">
+              {resumeScore}%
+            </p>
           </div>
 
           <p className="text-xs text-slate-400">
-            Demo analysis based on sample data.
+            This score is calculated from the information currently entered in your resume.
           </p>
         </div>
       </Modal>
 
-      {/* Improve Resume Modal */}
+      {/* =========================
+          IMPROVE RESUME MODAL
+      ========================= */}
+
       <Modal
         open={improveOpen}
         onClose={() => setImproveOpen(false)}
-        title="Improvement Suggestions"
+        title="Improve Resume"
       >
-       <div className="space-y-3">
-  {improvementSuggestions.length > 0 ? (
-    improvementSuggestions.map((suggestion, i) => (
-      <div
-        key={i}
-        className="flex items-start gap-2.5"
-      >
-        <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
+        <div className="space-y-4">
+          <div className="rounded-lg bg-primary-50 p-4">
+            <p className="text-sm font-medium text-slate-700">
+              Resume improvement analysis
+            </p>
 
-        <span className="text-sm text-slate-600">
-          {suggestion}
-        </span>
-      </div>
-    ))
-  ) : (
-    <div className="rounded-lg bg-green-50 p-4 text-center">
-      <CheckCircle2 className="mx-auto h-6 w-6 text-green-500" />
+            <p className="mt-1 text-xs text-slate-500">
+              These suggestions are based on the information currently entered in your resume.
+            </p>
+          </div>
 
-      <p className="mt-2 text-sm font-medium text-green-700">
-        Your resume looks great!
-      </p>
+          <div className="space-y-3">
+            {improvementSuggestions.map(
+              (suggestion, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2.5"
+                >
+                  <TrendingUp className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
 
-      <p className="mt-1 text-xs text-green-600">
-        No major improvements are currently needed.
-      </p>
-    </div>
-  )}
-</div>
+                  <span className="text-sm text-slate-600">
+                    {suggestion}
+                  </span>
+                </div>
+              )
+            )}
+          </div>
+
+          <p className="text-xs text-slate-400">
+            Suggestions are generated from your resume data. AI-powered rewriting can be added later.
+          </p>
+        </div>
       </Modal>
     </div>
   );
