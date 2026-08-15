@@ -41,7 +41,25 @@ export function ResumePage() {
   const removeSkill = (skill: string) => {
     update({ skills: resume.skills.filter((s) => s !== skill) });
   };
+const addExperience = () => {
+  update({
+    experience: [
+      ...resume.experience,
+      {
+        role: '',
+        company: '',
+        period: '',
+        description: '',
+      },
+    ],
+  });
+};
 
+const removeExperience = (index: number) => {
+  update({
+    experience: resume.experience.filter((_, i) => i !== index),
+  });
+};
   const handleSave = () => {
     saveToStorage(STORAGE_KEY, resume);
     setSavedMessage(true);
@@ -166,7 +184,21 @@ export function ResumePage() {
           <h2 className="text-lg font-semibold text-slate-900">Experience</h2>
           <div className="mt-4 space-y-4">
             {resume.experience.map((exp, i) => (
-              <div key={i} className="rounded-lg border border-slate-200 p-4">
+  <div key={i} className="rounded-lg border border-slate-200 p-4">
+    <div className="mb-3 flex items-center justify-between">
+      <h3 className="text-sm font-semibold text-slate-700">
+        Experience {i + 1}
+      </h3>
+      <button
+        type="button"
+        onClick={() => removeExperience(i)}
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-red-600 hover:bg-red-50"
+        aria-label={`Delete experience ${i + 1}`}
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete
+      </button>
+    </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label className="label">Role</label>
@@ -220,6 +252,12 @@ export function ResumePage() {
                 </div>
               </div>
             ))}
+                    </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button variant="secondary" onClick={addExperience}>
+              <Plus className="h-4 w-4" /> Add Experience
+            </Button>
           </div>
         </div>
 
