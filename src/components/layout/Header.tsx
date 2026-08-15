@@ -8,8 +8,8 @@ const navLinks = [
   { label: 'Resume', path: '/resume' },
   { label: 'Applications', path: '/applications' },
   { label: 'Interview Prep', path: '/interview' },
+  { label: 'Profile', path: '/profile' },
 ];
-
 interface HeaderProps {
   currentPath: string;
 }
