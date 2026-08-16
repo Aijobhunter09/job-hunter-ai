@@ -1,16 +1,15 @@
-
 import { useState } from 'react';
 import {
-  ArrowLeft,
-  MapPin,
-  Briefcase,
-  DollarSign,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  Sparkles,
-  Bookmark,
-  FileText,
+ArrowLeft,
+MapPin,
+Briefcase,
+DollarSign,
+Calendar,
+CheckCircle2,
+XCircle,
+Sparkles,
+Bookmark,
+FileText,
 } from 'lucide-react';
 
 import type { Job } from '@/types';
@@ -24,166 +23,318 @@ import { navigate } from '@/lib/router';
 import { useSavedJobs } from '@/hooks/useSavedJobs';
 
 interface JobDetailsPageProps {
-  jobId: string;
+jobId: string;
 }
 
-export function JobDetailsPage({
-  jobId,
-}: JobDetailsPageProps) {
-  const { isSaved, toggleSave } = useSavedJobs();
+export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
+const { isSaved, toggleSave } = useSavedJobs();
+const [analyzed, setAnalyzed] = useState(false);
 
-  const [analyzed, setAnalyzed] = useState(false);
+const job: Job | undefined = jobs.find((item) => item.id === jobId);
 
-  /*
-   * Find the job from the centralized jobs.ts file.
-   *
-   * The router passes the ID as a string:
-   * /jobs/1
-   *
-   * jobs.ts also contains string IDs:
-   * id: '1'
-   */
-  const job: Job | undefined = jobs.find(
-    (j) => j.id === jobId
-  );
+if (!job) {
+return ( <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 lg:px-8"> <div className="card p-10"> <h1 className="text-2xl font-bold text-slate-900">
+Job not found </h1>
 
-  /*
-   * Job not found
-   */
-  if (!job) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Job not found
-        </h1>
+```
+      <p className="mt-2 text-slate-600">
+        This job may have been removed or doesn't exist.
+      </p>
 
-        <p className="mt-2 text-slate-600">
-          This job may have been removed or doesn't exist.
-        </p>
+      <div className="mt-6">
+        <Button onClick={() => navigate('/jobs')}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to Jobs
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+```
 
-        <div className="mt-6">
-          <Button onClick={() => navigate('/jobs')}>
-            <ArrowLeft className="h-4 w-4" />
-            Back to Jobs
-          </Button>
+}
+
+const saved = isSaved(job.id);
+
+const strengths = job.skills.slice(0, 4);
+
+const missing =
+job.skills.length > 4 ? job.skills.slice(4, 6) : [];
+
+return ( <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+<button
+type="button"
+onClick={() => navigate('/jobs')}
+className="mb-6 flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+> <ArrowLeft className="h-4 w-4" />
+Back to Jobs </button>
+
+```
+  <div className="card p-6">
+    <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-lg font-bold text-primary-700">
+          {job.company.slice(0, 2).toUpperCase()}
+        </div>
+
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
+            {job.title}
+          </h1>
+
+          <p className="mt-1 text-slate-600">
+            {job.company}
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 shrink-0" />
+              {job.location}
+            </span>
+
+            <span className="flex items-center gap-1.5">
+              <Briefcase className="h-4 w-4 shrink-0" />
+              {job.jobType}
+            </span>
+
+            <span className="flex items-center gap-1.5">
+              <DollarSign className="h-4 w-4 shrink-0" />
+              {job.salary}
+            </span>
+
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4 shrink-0" />
+              {job.postedDate}
+            </span>
+          </div>
         </div>
       </div>
-    );
-  }
 
-  const saved = isSaved(job.id);
+      <div className="flex shrink-0 justify-start sm:justify-end">
+        <MatchScore
+          score={job.matchScore}
+          size="lg"
+        />
+      </div>
+    </div>
 
-  /*
-   * Demo AI match information.
-   *
-   * We will improve this later so it uses
-   * the actual user's profile and skills.
-   */
-  const strengths = [
-    'React',
-    'TypeScript',
-    'Git',
-    'API development',
-  ];
-
-  const missing = ['AWS'];
-
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-
-      {/* Back to Jobs */}
-      <button
-        type="button"
-        onClick={() => navigate('/jobs')}
-        className="mb-6 flex items-center gap-1.5 text-sm font-medium text-slate-600 transition hover:text-slate-900"
+    <div className="mt-5 flex flex-wrap gap-2">
+      <Badge
+        variant={
+          job.workMode === 'Remote'
+            ? 'success'
+            : 'info'
+        }
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Jobs
-      </button>
+        {job.workMode}
+      </Badge>
 
-      {/* =========================
-          JOB HEADER
-      ========================== */}
+      <Badge variant="neutral">
+        {job.experienceLevel} level
+      </Badge>
+
+      {job.skills.map((skill) => (
+        <Badge
+          key={skill}
+          variant="primary"
+        >
+          {skill}
+        </Badge>
+      ))}
+    </div>
+
+    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <Button
+        onClick={() => navigate('/applications')}
+        className="flex-1 sm:flex-none"
+      >
+        <FileText className="h-4 w-4" />
+        Apply Now
+      </Button>
+
+      <Button
+        variant="secondary"
+        onClick={() => toggleSave(job.id)}
+        className="flex-1 sm:flex-none"
+      >
+        <Bookmark
+          className={
+            saved
+              ? 'h-4 w-4 fill-current'
+              : 'h-4 w-4'
+          }
+        />
+        {saved ? 'Saved' : 'Save Job'}
+      </Button>
+    </div>
+  </div>
+
+  <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div className="space-y-6 lg:col-span-2">
       <div className="card p-6">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Job Description
+        </h2>
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <p className="mt-3 leading-relaxed text-slate-600">
+          {job.description}
+        </p>
+      </div>
 
-          {/* Company + Job Information */}
-          <div className="flex items-start gap-4">
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Responsibilities
+        </h2>
 
-            {/* Company initials */}
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-lg font-bold text-primary-700">
-              {job.company
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
+        {job.responsibilities.length > 0 ? (
+          <ul className="mt-3 space-y-2.5">
+            {job.responsibilities.map(
+              (responsibility, index) => (
+                <li
+                  key={`${responsibility}-${index}`}
+                  className="flex items-start gap-2.5 text-slate-600"
+                >
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
 
-            <div className="min-w-0">
+                  <span>
+                    {responsibility}
+                  </span>
+                </li>
+              )
+            )}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-slate-500">
+            Responsibilities were not provided.
+          </p>
+        )}
+      </div>
 
-              {/* Job title */}
-              <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
-                {job.title}
-              </h1>
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Requirements
+        </h2>
 
-              {/* Company */}
-              <p className="mt-1 text-slate-600">
-                {job.company}
-              </p>
+        {job.requirements.length > 0 ? (
+          <ul className="mt-3 space-y-2.5">
+            {job.requirements.map(
+              (requirement, index) => (
+                <li
+                  key={`${requirement}-${index}`}
+                  className="flex items-start gap-2.5 text-slate-600"
+                >
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
 
-              {/* Job metadata */}
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
+                  <span>
+                    {requirement}
+                  </span>
+                </li>
+              )
+            )}
+          </ul>
+        ) : (
+          <p className="mt-3 text-sm text-slate-500">
+            Requirements were not provided.
+          </p>
+        )}
+      </div>
+    </div>
 
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
-                  {job.location}
-                </span>
+    <div className="space-y-6">
+      <div className="card p-6">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary-700" />
 
-                <span className="flex items-center gap-1.5">
-                  <Briefcase className="h-4 w-4" />
-                  {job.jobType}
-                </span>
-
-                <span className="flex items-center gap-1.5">
-                  <DollarSign className="h-4 w-4" />
-                  {job.salary}
-                </span>
-
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  {job.postedDate}
-                </span>
-
-              </div>
-            </div>
-          </div>
-
-          {/* Match Score */}
-          <div className="flex shrink-0 flex-col items-center gap-3">
-            <MatchScore
-              score={job.matchScore}
-              size="lg"
-            />
-          </div>
-
+          <h2 className="text-lg font-semibold text-slate-900">
+            AI Match Analysis
+          </h2>
         </div>
 
-        {/* Job Tags */}
-        <div className="mt-5 flex flex-wrap gap-2">
+        {!analyzed ? (
+          <div className="mt-4">
+            <p className="text-sm leading-6 text-slate-600">
+              Get a detailed breakdown of how your
+              skills match this role.
+            </p>
 
-          <Badge
-            variant={
-              job.workMode === 'Remote'
-                ? 'success'
-                : 'info'
-            }
-          >
-            {job.workMode}
-          </Badge>
+            <Button
+              onClick={() => setAnalyzed(true)}
+              className="mt-4 w-full"
+            >
+              <Sparkles className="h-4 w-4" />
+              Analyze My Match
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <div className="rounded-lg bg-primary-50 p-4 text-center">
+              <p className="text-sm text-slate-600">
+                Your Match
+              </p>
 
-          <Badge variant="neutral">
-            {job.experienceLevel} level
-          </Badge>
+              <p className="text-3xl font-bold text-primary-700">
+                {job.matchScore}%
+              </p>
+            </div>
 
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-green-700">
+                Matching Skills
+              </h3>
+
+              {strengths.length > 0 ? (
+                <ul className="mt-2 space-y-1.5">
+                  {strengths.map((skill) => (
+                    <li
+                      key={skill}
+                      className="flex items-center gap-2 text-sm text-slate-600"
+                    >
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">
+                  No matching skills available.
+                </p>
+              )}
+            </div>
+
+            {missing.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-amber-700">
+                  Additional Skills
+                </h3>
+
+                <ul className="mt-2 space-y-1.5">
+                  {missing.map((skill) => (
+                    <li
+                      key={skill}
+                      className="flex items-center gap-2 text-sm text-slate-600"
+                    >
+                      <XCircle className="h-4 w-4 shrink-0 text-amber-500" />
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p className="mt-4 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+              This is a demo match analysis based
+              on the job's available skill data.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="card p-6">
+        <h2 className="text-sm font-semibold text-slate-900">
+          Required Skills
+        </h2>
+
+        <div className="mt-3 flex flex-wrap gap-2">
           {job.skills.map((skill) => (
             <Badge
               key={skill}
@@ -192,266 +343,70 @@ export function JobDetailsPage({
               {skill}
             </Badge>
           ))}
-
-        </div>
-
-        {/* Actions */}
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-
-          {/* Apply */}
-          <Button
-            onClick={() => navigate('/applications')}
-            className="flex-1 sm:flex-none"
-          >
-            <FileText className="h-4 w-4" />
-            Apply Now
-          </Button>
-
-          {/* Save */}
-          <Button
-            variant="secondary"
-            onClick={() => toggleSave(job.id)}
-            className="flex-1 sm:flex-none"
-          >
-            <Bookmark
-              className={
-                saved
-                  ? 'h-4 w-4 fill-current'
-                  : 'h-4 w-4'
-              }
-            />
-
-            {saved
-              ? 'Saved'
-              : 'Save Job'}
-          </Button>
-
         </div>
       </div>
 
-      {/* =========================
-          MAIN CONTENT
-      ========================== */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="card p-6">
+        <h2 className="text-sm font-semibold text-slate-900">
+          Job Information
+        </h2>
 
-        {/* =====================
-            LEFT COLUMN
-        ====================== */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="mt-4 space-y-3 text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-500">
+              Work Mode
+            </span>
 
-          {/* Job Description */}
-          <div className="card p-6">
-
-            <h2 className="text-lg font-semibold text-slate-900">
-              Job Description
-            </h2>
-
-            <p className="mt-3 leading-relaxed text-slate-600">
-              {job.description}
-            </p>
-
+            <span className="font-medium text-slate-900">
+              {job.workMode}
+            </span>
           </div>
 
-          {/* Responsibilities */}
-          <div className="card p-6">
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-500">
+              Job Type
+            </span>
 
-            <h2 className="text-lg font-semibold text-slate-900">
-              Responsibilities
-            </h2>
-
-            <ul className="mt-3 space-y-2.5">
-
-              {job.responsibilities.map(
-                (responsibility, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2.5 text-slate-600"
-                  >
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
-
-                    <span>
-                      {responsibility}
-                    </span>
-                  </li>
-                )
-              )}
-
-            </ul>
-
+            <span className="font-medium text-slate-900">
+              {job.jobType}
+            </span>
           </div>
 
-          {/* Requirements */}
-          <div className="card p-6">
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-500">
+              Experience
+            </span>
 
-            <h2 className="text-lg font-semibold text-slate-900">
-              Requirements
-            </h2>
-
-            <ul className="mt-3 space-y-2.5">
-
-              {job.requirements.map(
-                (requirement, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-2.5 text-slate-600"
-                  >
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-
-                    <span>
-                      {requirement}
-                    </span>
-                  </li>
-                )
-              )}
-
-            </ul>
-
+            <span className="font-medium text-slate-900">
+              {job.experienceLevel}
+            </span>
           </div>
 
-        </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-500">
+              Salary
+            </span>
 
-        {/* =====================
-            RIGHT SIDEBAR
-        ====================== */}
-        <div className="space-y-6">
-
-          {/* AI Match Analysis */}
-          <div className="card p-6">
-
-            <div className="flex items-center gap-2">
-
-              <Sparkles className="h-5 w-5 text-primary-700" />
-
-              <h2 className="text-lg font-semibold text-slate-900">
-                AI Match Analysis
-              </h2>
-
-            </div>
-
-            {!analyzed ? (
-
-              <div className="mt-4">
-
-                <p className="text-sm text-slate-600">
-                  Get a detailed breakdown of how your
-                  skills match this role.
-                </p>
-
-                <Button
-                  onClick={() =>
-                    setAnalyzed(true)
-                  }
-                  className="mt-4 w-full"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Analyze My Match
-                </Button>
-
-              </div>
-
-            ) : (
-
-              <div className="mt-4 animate-slide-up">
-
-                {/* Match percentage */}
-                <div className="rounded-lg bg-primary-50 p-4 text-center">
-
-                  <p className="text-sm text-slate-600">
-                    Your Match
-                  </p>
-
-                  <p className="text-3xl font-bold text-primary-700">
-                    {job.matchScore}%
-                  </p>
-
-                </div>
-
-                {/* Strengths */}
-                <div className="mt-4">
-
-                  <h3 className="text-sm font-semibold text-green-700">
-                    Strengths
-                  </h3>
-
-                  <ul className="mt-2 space-y-1.5">
-
-                    {strengths.map(
-                      (strength) => (
-                        <li
-                          key={strength}
-                          className="flex items-center gap-2 text-sm text-slate-600"
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          {strength}
-                        </li>
-                      )
-                    )}
-
-                  </ul>
-
-                </div>
-
-                {/* Missing skills */}
-                <div className="mt-4">
-
-                  <h3 className="text-sm font-semibold text-amber-700">
-                    Missing / Preferred
-                  </h3>
-
-                  <ul className="mt-2 space-y-1.5">
-
-                    {missing.map(
-                      (skill) => (
-                        <li
-                          key={skill}
-                          className="flex items-center gap-2 text-sm text-slate-600"
-                        >
-                          <XCircle className="h-4 w-4 text-amber-500" />
-                          {skill}
-                        </li>
-                      )
-                    )}
-
-                  </ul>
-
-                </div>
-
-                <p className="mt-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-                  Demo analysis based on sample
-                  profile data.
-                </p>
-
-              </div>
-
-            )}
-
+            <span className="text-right font-medium text-slate-900">
+              {job.salary}
+            </span>
           </div>
 
-          {/* Required Skills */}
-          <div className="card p-6">
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-500">
+              Posted
+            </span>
 
-            <h2 className="text-sm font-semibold text-slate-900">
-              Required Skills
-            </h2>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-
-              {job.skills.map((skill) => (
-                <Badge
-                  key={skill}
-                  variant="primary"
-                >
-                  {skill}
-                </Badge>
-              ))}
-
-            </div>
-
+            <span className="font-medium text-slate-900">
+              {job.postedDate}
+            </span>
           </div>
-
         </div>
       </div>
     </div>
-  );
-}
+  </div>
+</div>
 ```
+
+);
+}
