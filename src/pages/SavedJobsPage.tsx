@@ -8,118 +8,16 @@ import {
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-
-type Job = {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
-  workplace: 'Remote' | 'On-site' | 'Hybrid';
-  experience: 'Entry Level' | 'Mid Level' | 'Senior Level';
-  salary: string;
-  description: string;
-  skills: string[];
-  url: string;
-};
+import { jobs } from '@/data/jobs';
+import type { Job } from '@/types';
 
 const SAVED_JOBS_KEY = 'saved_jobs';
 
-/*
- * Keep these jobs synchronized with the jobs
- * available in JobsPage.tsx.
- */
-const jobs: Job[] = [
-  {
-    id: 1,
-    title: 'Frontend Developer',
-    company: 'TechNova Solutions',
-    location: 'Lahore, Pakistan',
-    type: 'Full-time',
-    workplace: 'Remote',
-    experience: 'Mid Level',
-    salary: '$1,000 - $1,800 / month',
-    description:
-      'Build responsive web applications using React, TypeScript, and modern frontend technologies.',
-    skills: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 2,
-    title: 'SEO Specialist',
-    company: 'Digital Growth Agency',
-    location: 'Karachi, Pakistan',
-    type: 'Full-time',
-    workplace: 'Hybrid',
-    experience: 'Mid Level',
-    salary: '$700 - $1,400 / month',
-    description:
-      'Develop SEO strategies, perform keyword research, optimize websites, and monitor search performance.',
-    skills: ['SEO', 'Google Search Console', 'Keyword Research', 'Analytics'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 3,
-    title: 'Junior Web Developer',
-    company: 'WebCraft Studio',
-    location: 'Islamabad, Pakistan',
-    type: 'Full-time',
-    workplace: 'On-site',
-    experience: 'Entry Level',
-    salary: '$500 - $900 / month',
-    description:
-      'Work with a development team to create and maintain modern business websites.',
-    skills: ['HTML', 'CSS', 'JavaScript', 'React'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 4,
-    title: 'Full Stack Developer',
-    company: 'CloudCore Technologies',
-    location: 'Remote',
-    type: 'Contract',
-    workplace: 'Remote',
-    experience: 'Senior Level',
-    salary: '$2,000 - $3,500 / month',
-    description:
-      'Develop scalable full-stack applications and work with APIs, databases, and cloud services.',
-    skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 5,
-    title: 'Digital Marketing Specialist',
-    company: 'MarketBoost',
-    location: 'Dubai, UAE',
-    type: 'Full-time',
-    workplace: 'Hybrid',
-    experience: 'Mid Level',
-    salary: '$1,500 - $2,500 / month',
-    description:
-      'Manage digital marketing campaigns, SEO initiatives, content strategies, and performance reporting.',
-    skills: ['SEO', 'Google Ads', 'Content Marketing', 'Analytics'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-  {
-    id: 6,
-    title: 'UI/UX Designer',
-    company: 'Creative Labs',
-    location: 'Remote',
-    type: 'Part-time',
-    workplace: 'Remote',
-    experience: 'Entry Level',
-    salary: '$600 - $1,200 / month',
-    description:
-      'Design intuitive interfaces and user experiences for web and mobile applications.',
-    skills: ['Figma', 'UI Design', 'UX Research', 'Prototyping'],
-    url: 'https://www.linkedin.com/jobs/',
-  },
-];
-
 export function SavedJobsPage() {
-  const [savedJobIds, setSavedJobIds] = useState<number[]>([]);
+  const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
   const [search, setSearch] = useState('');
 
+  // Load saved jobs from localStorage
   useEffect(() => {
     try {
       const stored = localStorage.getItem(SAVED_JOBS_KEY);
@@ -129,18 +27,24 @@ export function SavedJobsPage() {
         return;
       }
 
-      const parsed = JSON.parse(stored);
+      const parsed: unknown = JSON.parse(stored);
 
-      setSavedJobIds(
-        Array.isArray(parsed)
-          ? parsed.filter((id): id is number => typeof id === 'number')
-          : []
+      if (!Array.isArray(parsed)) {
+        setSavedJobIds([]);
+        return;
+      }
+
+      const validIds = parsed.filter(
+        (id): id is string => typeof id === 'string'
       );
+
+      setSavedJobIds(validIds);
     } catch {
       setSavedJobIds([]);
     }
   }, []);
 
+  // Find saved jobs from the central jobs.ts file
   const savedJobs = useMemo(() => {
     const saved = jobs.filter((job) => savedJobIds.includes(job.id));
 
@@ -156,6 +60,9 @@ export function SavedJobsPage() {
         job.company,
         job.location,
         job.description,
+        job.workMode,
+        job.jobType,
+        job.experienceLevel,
         ...job.skills,
       ]
         .join(' ')
@@ -165,15 +72,29 @@ export function SavedJobsPage() {
     });
   }, [savedJobIds, search]);
 
-  const removeSavedJob = (id: number) => {
+  // Remove a saved job
+  const removeSavedJob = (id: string) => {
     const next = savedJobIds.filter((jobId) => jobId !== id);
 
     setSavedJobIds(next);
     localStorage.setItem(SAVED_JOBS_KEY, JSON.stringify(next));
   };
 
+  // Open the job
+  const openJob = (job: Job) => {
+    /*
+     * Your current jobs.ts does not contain an external URL.
+     *
+     * For now, open the internal job details page.
+     */
+    window.history.pushState({}, '', `/jobs/${job.id}`);
+
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Saved Jobs
@@ -184,6 +105,7 @@ export function SavedJobsPage() {
         </p>
       </div>
 
+      {/* Search */}
       {savedJobIds.length > 0 && (
         <div className="card mb-6 p-4">
           <div className="relative">
@@ -199,6 +121,7 @@ export function SavedJobsPage() {
         </div>
       )}
 
+      {/* No saved jobs */}
       {savedJobIds.length === 0 ? (
         <div className="card p-10 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
@@ -214,6 +137,7 @@ export function SavedJobsPage() {
           </p>
         </div>
       ) : savedJobs.length === 0 ? (
+        /* No search results */
         <div className="card p-10 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
             <Search className="h-6 w-6 text-slate-400" />
@@ -229,6 +153,7 @@ export function SavedJobsPage() {
         </div>
       ) : (
         <>
+          {/* Count */}
           <div className="mb-4 flex items-center gap-2">
             <BookmarkCheck className="h-5 w-5 text-primary-600" />
 
@@ -238,12 +163,14 @@ export function SavedJobsPage() {
             </p>
           </div>
 
+          {/* Saved Jobs */}
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             {savedJobs.map((job) => (
               <div
                 key={job.id}
                 className="card flex flex-col p-5 transition-shadow hover:shadow-md"
               >
+                {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold text-slate-900">
@@ -266,6 +193,7 @@ export function SavedJobsPage() {
                   </button>
                 </div>
 
+                {/* Job information */}
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="h-4 w-4" />
@@ -274,28 +202,36 @@ export function SavedJobsPage() {
 
                   <span className="inline-flex items-center gap-1.5">
                     <Briefcase className="h-4 w-4" />
-                    {job.type}
+                    {job.jobType}
                   </span>
                 </div>
 
+                {/* Tags */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
-                    {job.workplace}
+                    {job.workMode}
                   </span>
 
                   <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                    {job.experience}
+                    {job.experienceLevel}
+                  </span>
+
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                    {job.matchScore}% Match
                   </span>
                 </div>
 
+                {/* Salary */}
                 <p className="mt-4 text-sm font-semibold text-slate-800">
                   {job.salary}
                 </p>
 
+                {/* Description */}
                 <p className="mt-3 text-sm leading-6 text-slate-600">
                   {job.description}
                 </p>
 
+                {/* Skills */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {job.skills.map((skill) => (
                     <span
@@ -307,17 +243,10 @@ export function SavedJobsPage() {
                   ))}
                 </div>
 
+                {/* Actions */}
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
-                  <Button
-                    onClick={() =>
-                      window.open(
-                        job.url,
-                        '_blank',
-                        'noopener,noreferrer'
-                      )
-                    }
-                  >
-                    Apply Now
+                  <Button onClick={() => openJob(job)}>
+                    View Job
                     <ExternalLink className="h-4 w-4" />
                   </Button>
 
