@@ -8,6 +8,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { navigate } from '@/lib/router';
 import { jobs } from '@/data/jobs';
 import type { Job } from '@/types';
 
@@ -81,16 +82,9 @@ export function SavedJobsPage() {
   };
 
   // Open the job
-  const openJob = (job: Job) => {
-    /*
-     * Your current jobs.ts does not contain an external URL.
-     *
-     * For now, open the internal job details page.
-     */
-    window.history.pushState({}, '', `/jobs/${job.id}`);
-
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
+const openJob = (job: Job) => {
+  navigate(`/jobs/${job.id}`);
+};
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
