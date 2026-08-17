@@ -120,7 +120,9 @@ export function JobsPage() {
     setSearching(true);
     setApiError('');
 
-    const searchedJobs = await searchRemoteJobs(query);
+    const searchedJobs = await searchRemoteJobs({
+  query,
+});
 
     setRemoteJobs(searchedJobs);
   } catch (error) {
