@@ -15,7 +15,10 @@ import {
 import { Button } from '@/components/ui/Button';
 import { useApplications } from '@/hooks/useApplications';
 import { jobs as demoJobs } from '@/data/jobs';
-import { fetchRemoteJobs } from '@/lib/jobsApi';
+import {
+  fetchRemoteJobs,
+  searchRemoteJobs,
+} from '@/lib/jobsApi';
 import type { Application, Job } from '@/types';
 
 const SAVED_JOBS_KEY = 'saved_jobs';
@@ -31,6 +34,7 @@ export function JobsPage() {
   const [remoteJobs, setRemoteJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState('');
+  const [searching, setSearching] = useState(false);
 
   const [savedJobs, setSavedJobs] = useState<string[]>(() => {
     try {
@@ -89,6 +93,46 @@ export function JobsPage() {
       cancelled = true;
     };
   }, []);
+  const handleLiveSearch = async () => {
+  const query = search.trim();
+
+  if (!query) {
+    try {
+      setSearching(true);
+      setApiError('');
+
+      const fetchedJobs = await fetchRemoteJobs();
+      setRemoteJobs(fetchedJobs);
+    } catch (error) {
+      console.error('Failed to reload jobs:', error);
+
+      setApiError(
+        'Unable to load live jobs right now.'
+      );
+    } finally {
+      setSearching(false);
+    }
+
+    return;
+  }
+
+  try {
+    setSearching(true);
+    setApiError('');
+
+    const searchedJobs = await searchRemoteJobs(query);
+
+    setRemoteJobs(searchedJobs);
+  } catch (error) {
+    console.error('Failed to search jobs:', error);
+
+    setApiError(
+      'Unable to search live jobs right now.'
+    );
+  } finally {
+    setSearching(false);
+  }
+};
 
   const availableJobs =
     remoteJobs.length > 0
@@ -244,12 +288,17 @@ export function JobsPage() {
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
-            <input
-              className="input pl-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Job title, skill, or company..."
-            />
+           <input
+  className="input pl-10"
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      handleLiveSearch();
+    }
+  }}
+  placeholder="Job title, skill, or company..."
+/>
           </div>
 
           <div className="relative">
