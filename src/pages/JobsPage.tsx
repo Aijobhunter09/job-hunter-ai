@@ -33,8 +33,8 @@ export function JobsPage() {
 
   const [remoteJobs, setRemoteJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState('');
   const [searching, setSearching] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const [savedJobs, setSavedJobs] = useState<string[]>(() => {
     try {
@@ -58,6 +58,12 @@ export function JobsPage() {
 
   const { applications, addApplication } = useApplications();
 
+  /*
+   * ---------------------------------------------------------
+   * INITIAL LIVE JOB LOAD
+   * ---------------------------------------------------------
+   */
+
   useEffect(() => {
     let cancelled = false;
 
@@ -78,6 +84,7 @@ export function JobsPage() {
           setApiError(
             'Unable to load live jobs right now. Showing demo jobs instead.'
           );
+
           setRemoteJobs([]);
         }
       } finally {
@@ -93,44 +100,58 @@ export function JobsPage() {
       cancelled = true;
     };
   }, []);
+
+  /*
+   * ---------------------------------------------------------
+   * LIVE SEARCH
+   * ---------------------------------------------------------
+   *
+   * Job Type and Experience are sent to the Himalayas search
+   * API.
+   *
+   * Workplace and Location are additionally filtered on the
+   * returned jobs so the UI remains compatible with the
+   * current jobsApi.ts implementation.
+   */
+
   const handleLiveSearch = async (
-  nextJobType = jobType,
-  nextExperience = experience
-) => {
-  const query = search.trim();
+    nextSearch = search,
+    nextJobType = jobType,
+    nextExperience = experience
+  ) => {
+    try {
+      setSearching(true);
+      setApiError('');
 
-  try {
-    setSearching(true);
-    setApiError('');
+      const searchedJobs = await searchRemoteJobs({
+        query: nextSearch.trim(),
+        employmentType:
+          nextJobType !== 'All'
+            ? nextJobType
+            : undefined,
+        seniority:
+          nextExperience !== 'All'
+            ? nextExperience
+            : undefined,
+      });
 
-    const searchedJobs = await searchRemoteJobs({
-      query,
-      employmentType:
-        nextJobType !== 'All'
-          ? nextJobType
-          : undefined,
-      seniority:
-        nextExperience !== 'All'
-          ? nextExperience
-          : undefined,
-    });
+      setRemoteJobs(searchedJobs);
+    } catch (error) {
+      console.error('Failed to search jobs:', error);
 
-    setRemoteJobs(searchedJobs);
-  } catch (error) {
-    console.error('Failed to search jobs:', error);
+      setApiError(
+        'Unable to search live jobs right now. Please try again.'
+      );
+    } finally {
+      setSearching(false);
+    }
+  };
 
-    setApiError(
-      'Unable to search live jobs right now.'
-    );
-  } finally {
-    setSearching(false);
-  }
-};
-
-  const availableJobs =
-    remoteJobs.length > 0
-      ? remoteJobs
-      : demoJobs;
+  /*
+   * ---------------------------------------------------------
+   * SAVED JOBS
+   * ---------------------------------------------------------
+   */
 
   const toggleSavedJob = (id: string) => {
     setSavedJobs((previous) => {
@@ -146,6 +167,12 @@ export function JobsPage() {
       return next;
     });
   };
+
+  /*
+   * ---------------------------------------------------------
+   * APPLICATIONS
+   * ---------------------------------------------------------
+   */
 
   const isJobApplied = (jobId: string) => {
     return applications.some(
@@ -192,11 +219,36 @@ export function JobsPage() {
     }
   };
 
+  /*
+   * ---------------------------------------------------------
+   * NORMALIZATION HELPERS
+   * ---------------------------------------------------------
+   *
+   * These prevent problems such as:
+   *
+   * "Full-time" !== "full-time"
+   * "Remote" !== "remote"
+   * "Senior" !== "senior"
+   */
+
+  const normalizeValue = (value: string | undefined) => {
+    return (value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s]+/g, '-');
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * FILTER JOBS
+   * ---------------------------------------------------------
+   */
+
   const filteredJobs = useMemo(() => {
     const searchText = search.trim().toLowerCase();
     const locationText = location.trim().toLowerCase();
 
-    return availableJobs.filter((job) => {
+    return remoteJobs.filter((job) => {
       const searchableText = [
         job.title,
         job.company,
@@ -207,40 +259,71 @@ export function JobsPage() {
         job.jobType,
         ...job.skills,
       ]
+        .filter(Boolean)
         .join(' ')
         .toLowerCase();
+
+      /*
+       * SEARCH
+       */
 
       const matchesSearch =
         !searchText ||
         searchableText.includes(searchText);
 
+      /*
+       * LOCATION
+       */
+
       const matchesLocation =
         !locationText ||
-        job.location.toLowerCase().includes(locationText) ||
-        job.workMode.toLowerCase().includes(locationText);
+        job.location
+          .toLowerCase()
+          .includes(locationText) ||
+        job.workMode
+          .toLowerCase()
+          .includes(locationText);
+
+      /*
+       * WORKPLACE
+       */
 
       const matchesWorkplace =
         workplace === 'All' ||
-        job.workMode === workplace;
+        normalizeValue(job.workMode) ===
+          normalizeValue(workplace);
 
-      const matchesType =
+      /*
+       * JOB TYPE
+       *
+       * Case-insensitive and tolerant of hyphen/space
+       * differences.
+       */
+
+      const matchesJobType =
         jobType === 'All' ||
-        job.jobType === jobType;
+        normalizeValue(job.jobType) ===
+          normalizeValue(jobType);
+
+      /*
+       * EXPERIENCE
+       */
 
       const matchesExperience =
         experience === 'All' ||
-        job.experienceLevel === experience;
+        normalizeValue(job.experienceLevel) ===
+          normalizeValue(experience);
 
       return (
         matchesSearch &&
         matchesLocation &&
         matchesWorkplace &&
-        matchesType &&
+        matchesJobType &&
         matchesExperience
       );
     });
   }, [
-    availableJobs,
+    remoteJobs,
     search,
     location,
     workplace,
@@ -248,13 +331,45 @@ export function JobsPage() {
     experience,
   ]);
 
-  const clearFilters = () => {
+  /*
+   * ---------------------------------------------------------
+   * CLEAR FILTERS
+   * ---------------------------------------------------------
+   */
+
+  const clearFilters = async () => {
     setSearch('');
     setLocation('');
     setWorkplace('All');
     setJobType('All');
     setExperience('All');
+
+    try {
+      setSearching(true);
+      setApiError('');
+
+      const freshJobs = await fetchRemoteJobs();
+
+      setRemoteJobs(freshJobs);
+    } catch (error) {
+      console.error(
+        'Failed to reload jobs:',
+        error
+      );
+
+      setApiError(
+        'Unable to reload live jobs right now.'
+      );
+    } finally {
+      setSearching(false);
+    }
   };
+
+  /*
+   * ---------------------------------------------------------
+   * FILTER STATE
+   * ---------------------------------------------------------
+   */
 
   const hasFilters =
     Boolean(search.trim()) ||
@@ -263,8 +378,17 @@ export function JobsPage() {
     jobType !== 'All' ||
     experience !== 'All';
 
+  /*
+   * ---------------------------------------------------------
+   * RENDER
+   * ---------------------------------------------------------
+   */
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+      {/* PAGE HEADER */}
+
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Find Your Next Job
@@ -276,23 +400,37 @@ export function JobsPage() {
         </p>
       </div>
 
+      {/* SEARCH + FILTERS */}
+
       <div className="card p-4">
+
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_auto]">
+
+          {/* SEARCH */}
+
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
-           <input
-  className="input pl-10"
-  value={search}
-  onChange={(e) => setSearch(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') {
-      handleLiveSearch();
-    }
-  }}
-  placeholder="Job title, skill, or company..."
-/>
+            <input
+              className="input pl-10"
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleLiveSearch(
+                    e.currentTarget.value,
+                    jobType,
+                    experience
+                  );
+                }
+              }}
+              placeholder="Job title, skill, or company..."
+            />
           </div>
+
+          {/* LOCATION */}
 
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -300,14 +438,29 @@ export function JobsPage() {
             <input
               className="input pl-10"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) =>
+                setLocation(e.target.value)
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleLiveSearch(
+                    search,
+                    jobType,
+                    experience
+                  );
+                }
+              }}
               placeholder="City, country, or remote..."
             />
           </div>
 
+          {/* FILTER BUTTON */}
+
           <Button
             onClick={() =>
-              setShowFilters((value) => !value)
+              setShowFilters(
+                (value) => !value
+              )
             }
           >
             <SlidersHorizontal className="h-4 w-4" />
@@ -315,8 +468,13 @@ export function JobsPage() {
           </Button>
         </div>
 
+        {/* FILTER PANEL */}
+
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 sm:grid-cols-3">
+
+            {/* WORKPLACE */}
+
             <div>
               <label className="label">
                 Workplace
@@ -325,16 +483,31 @@ export function JobsPage() {
               <select
                 className="input"
                 value={workplace}
-                onChange={(e) =>
-                  setWorkplace(e.target.value)
-                }
+                onChange={(e) => {
+                  setWorkplace(
+                    e.target.value
+                  );
+                }}
               >
-                <option>All</option>
-                <option>Remote</option>
-                <option>Hybrid</option>
-                <option>On-site</option>
+                <option value="All">
+                  All
+                </option>
+
+                <option value="Remote">
+                  Remote
+                </option>
+
+                <option value="Hybrid">
+                  Hybrid
+                </option>
+
+                <option value="On-site">
+                  On-site
+                </option>
               </select>
             </div>
+
+            {/* JOB TYPE */}
 
             <div>
               <label className="label">
@@ -344,21 +517,42 @@ export function JobsPage() {
               <select
                 className="input"
                 value={jobType}
-               onChange={(e) => {
-  const value = e.target.value;
+                onChange={(e) => {
+                  const value =
+                    e.target.value;
 
-  setJobType(value);
-  handleLiveSearch(value, experience);
-}}
-                
+                  setJobType(value);
+
+                  handleLiveSearch(
+                    search,
+                    value,
+                    experience
+                  );
+                }}
               >
-                <option>All</option>
-                <option>Full-time</option>
-                <option>Part-time</option>
-                <option>Contract</option>
-                <option>Internship</option>
+                <option value="All">
+                  All
+                </option>
+
+                <option value="Full-time">
+                  Full-time
+                </option>
+
+                <option value="Part-time">
+                  Part-time
+                </option>
+
+                <option value="Contract">
+                  Contract
+                </option>
+
+                <option value="Internship">
+                  Internship
+                </option>
               </select>
             </div>
+
+            {/* EXPERIENCE */}
 
             <div>
               <label className="label">
@@ -368,20 +562,45 @@ export function JobsPage() {
               <select
                 className="input"
                 value={experience}
-                onChange={(e) =>
-                  setExperience(e.target.value)
-                }
+                onChange={(e) => {
+                  const value =
+                    e.target.value;
+
+                  setExperience(value);
+
+                  handleLiveSearch(
+                    search,
+                    jobType,
+                    value
+                  );
+                }}
               >
-                <option>All</option>
-                <option>Entry</option>
-                <option>Mid</option>
-                <option>Senior</option>
-                <option>Lead</option>
+                <option value="All">
+                  All
+                </option>
+
+                <option value="Entry">
+                  Entry
+                </option>
+
+                <option value="Mid">
+                  Mid
+                </option>
+
+                <option value="Senior">
+                  Senior
+                </option>
+
+                <option value="Lead">
+                  Lead
+                </option>
               </select>
             </div>
           </div>
         )}
       </div>
+
+      {/* API ERROR */}
 
       {apiError && (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
@@ -389,10 +608,13 @@ export function JobsPage() {
         </div>
       )}
 
+      {/* JOB COUNT */}
+
       <div className="mb-4 mt-8 flex flex-wrap items-center justify-between gap-3">
+
         <div>
           <p className="font-medium text-slate-900">
-            {loading
+            {loading || searching
               ? 'Loading jobs...'
               : `${filteredJobs.length} ${
                   filteredJobs.length === 1
@@ -402,19 +624,22 @@ export function JobsPage() {
           </p>
 
           <p className="text-sm text-slate-500">
-            {loading
+            {loading || searching
               ? 'Fetching the latest remote opportunities.'
               : remoteJobs.length > 0
                 ? 'Live jobs loaded from the jobs API.'
-                : 'Showing demo opportunities.'}
+                : 'No live jobs are currently available.'}
           </p>
         </div>
+
+        {/* CLEAR */}
 
         {hasFilters && (
           <button
             type="button"
             onClick={clearFilters}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+            disabled={searching}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <X className="h-4 w-4" />
             Clear filters
@@ -422,29 +647,46 @@ export function JobsPage() {
         )}
       </div>
 
-      {loading ? (
+      {/* SEARCHING / INITIAL LOADING */}
+
+      {loading || searching ? (
         <div className="card flex min-h-[300px] items-center justify-center p-10">
           <div className="flex flex-col items-center gap-3 text-slate-500">
+
             <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
 
             <p className="text-sm">
-              Loading real jobs...
+              {searching
+                ? 'Searching live jobs...'
+                : 'Loading real jobs...'}
             </p>
           </div>
         </div>
       ) : filteredJobs.length > 0 ? (
+
+        /* JOB GRID */
+
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+
           {filteredJobs.map((job) => {
-            const isSaved = savedJobs.includes(job.id);
-            const isApplied = isJobApplied(job.id);
+            const isSaved =
+              savedJobs.includes(job.id);
+
+            const isApplied =
+              isJobApplied(job.id);
 
             return (
               <div
                 key={job.id}
                 className="card flex flex-col p-5 transition-shadow hover:shadow-md"
               >
+
+                {/* JOB HEADER */}
+
                 <div className="flex items-start justify-between gap-4">
+
                   <div className="min-w-0">
+
                     <h2 className="text-lg font-semibold text-slate-900">
                       {job.title}
                     </h2>
@@ -453,6 +695,8 @@ export function JobsPage() {
                       {job.company}
                     </p>
                   </div>
+
+                  {/* SAVE */}
 
                   <button
                     type="button"
@@ -474,7 +718,10 @@ export function JobsPage() {
                   </button>
                 </div>
 
+                {/* LOCATION + TYPE */}
+
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="h-4 w-4" />
                     {job.location}
@@ -486,7 +733,10 @@ export function JobsPage() {
                   </span>
                 </div>
 
+                {/* BADGES */}
+
                 <div className="mt-4 flex flex-wrap gap-2">
+
                   <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
                     {job.workMode}
                   </span>
@@ -502,30 +752,44 @@ export function JobsPage() {
                   )}
                 </div>
 
+                {/* SALARY */}
+
                 <p className="mt-4 text-sm font-semibold text-slate-800">
                   {job.salary}
                 </p>
+
+                {/* DESCRIPTION */}
 
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
                   {job.description}
                 </p>
 
+                {/* SKILLS */}
+
                 {job.skills.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {job.skills.slice(0, 8).map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600"
-                      >
-                        {skill}
-                      </span>
-                    ))}
+
+                    {job.skills
+                      .slice(0, 8)
+                      .map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600"
+                        >
+                          {skill}
+                        </span>
+                      ))}
                   </div>
                 )}
 
+                {/* ACTIONS */}
+
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+
                   <Button
-                    onClick={() => handleApply(job)}
+                    onClick={() =>
+                      handleApply(job)
+                    }
                   >
                     {isApplied ? (
                       <>
@@ -564,7 +828,11 @@ export function JobsPage() {
           })}
         </div>
       ) : (
+
+        /* NO JOBS */
+
         <div className="card p-10 text-center">
+
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
             <Search className="h-6 w-6 text-slate-400" />
           </div>
@@ -574,24 +842,31 @@ export function JobsPage() {
           </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-            Try changing your search keywords, location,
-            or filters to find more opportunities.
+            Try changing your search keywords,
+            location, workplace, job type, or
+            experience level.
           </p>
 
           <div className="mt-5">
+
             <Button
               variant="secondary"
               onClick={clearFilters}
             >
               Clear Search
             </Button>
+
           </div>
         </div>
       )}
 
+      {/* SAVED JOBS INFO */}
+
       {savedJobs.length > 0 && (
         <div className="mt-8 rounded-lg border border-primary-100 bg-primary-50 p-4">
+
           <div className="flex items-center gap-2">
+
             <BookmarkCheck className="h-5 w-5 text-primary-600" />
 
             <p className="text-sm font-medium text-slate-800">
@@ -607,8 +882,13 @@ export function JobsPage() {
           </p>
         </div>
       )}
+
+      {/* SOURCE */}
+
       <div className="mt-8 text-center text-sm text-slate-500">
+
         Live remote jobs sourced from{' '}
+
         <a
           href="https://himalayas.app"
           target="_blank"
@@ -619,9 +899,14 @@ export function JobsPage() {
         </a>
         .
       </div>
+
+      {/* APPLICATIONS */}
+
       {applications.length > 0 && (
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
+
           <div className="flex items-center gap-2">
+
             <CheckCircle2 className="h-5 w-5 text-blue-600" />
 
             <p className="text-sm font-medium text-slate-800">
@@ -634,8 +919,8 @@ export function JobsPage() {
           </div>
 
           <p className="mt-1 text-xs text-slate-500">
-            Your applications are automatically tracked in
-            the Applications section.
+            Your applications are automatically tracked
+            in the Applications section.
           </p>
         </div>
       )}
