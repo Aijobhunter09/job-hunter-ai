@@ -1,26 +1,56 @@
-export type JobType = 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
-export type WorkMode = 'Remote' | 'Hybrid' | 'On-site';
-export type ExperienceLevel = 'Entry' | 'Mid' | 'Senior' | 'Lead';
+export type JobType =
+  | 'Full-time'
+  | 'Part-time'
+  | 'Contract'
+  | 'Internship';
+
+export type WorkMode =
+  | 'Remote'
+  | 'Hybrid'
+  | 'On-site';
+
+export type ExperienceLevel =
+  | 'Entry'
+  | 'Mid'
+  | 'Senior'
+  | 'Lead';
 
 export interface Job {
   id: string;
   title: string;
   company: string;
   location: string;
+
   workMode: WorkMode;
   jobType: JobType;
+  experienceLevel: ExperienceLevel;
+
   salary: string;
   salaryMin: number;
+
   postedDate: string;
+
   matchScore: number;
+
   skills: string[];
-  experienceLevel: ExperienceLevel;
+
   description: string;
   responsibilities: string[];
   requirements: string[];
+
+  // External application page for the job
+  applicationUrl: string;
+
+  // Job source, for example: Himalayas
+  source: string;
 }
 
-export type ApplicationStatus = 'Saved' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
+export type ApplicationStatus =
+  | 'Saved'
+  | 'Applied'
+  | 'Interview'
+  | 'Offer'
+  | 'Rejected';
 
 export interface Application {
   id: string;
@@ -46,13 +76,31 @@ export interface UserProfile {
   linkedinUrl: string;
   portfolioUrl: string;
 }
+
 export interface ResumeData {
   fullName: string;
   email: string;
   phone: string;
   summary: string;
+
   skills: string[];
-  experience: { role: string; company: string; period: string; description: string }[];
-  education: { degree: string; school: string; period: string }[];
-  projects: { name: string; description: string; link: string }[];
+
+  experience: {
+    role: string;
+    company: string;
+    period: string;
+    description: string;
+  }[];
+
+  education: {
+    degree: string;
+    school: string;
+    period: string;
+  }[];
+
+  projects: {
+    name: string;
+    description: string;
+    link: string;
+  }[];
 }
