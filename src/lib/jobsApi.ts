@@ -75,29 +75,64 @@ export async function fetchRemoteJobs(): Promise<Job[]> {
   return extractJobs(data).map(mapJob);
 }
 
+export interface JobSearchOptions {
+  query?: string;
+  country?: string;
+  seniority?: string;
+  employmentType?: string;
+  timezone?: string;
+  sort?: string;
+  page?: number;
+}
+
 export async function searchRemoteJobs(
-  query: string,
-  page = 1
+  options: JobSearchOptions = {}
 ): Promise<Job[]> {
   const params = new URLSearchParams();
 
-  const trimmedQuery = query.trim();
-
-  if (trimmedQuery) {
-    params.set('q', trimmedQuery);
+  if (options.query?.trim()) {
+    params.set('q', options.query.trim());
   }
 
-  params.set('page', String(page));
+  if (options.country?.trim()) {
+    params.set('country', options.country.trim());
+  }
+
+  if (options.seniority?.trim()) {
+    params.set('seniority', options.seniority.trim());
+  }
+
+  if (options.employmentType?.trim()) {
+    params.set(
+      'employment_type',
+      options.employmentType.trim()
+    );
+  }
+
+  if (options.timezone?.trim()) {
+    params.set('timezone', options.timezone.trim());
+  }
+
+  if (options.sort?.trim()) {
+    params.set('sort', options.sort.trim());
+  }
+
+  params.set('page', String(options.page ?? 1));
 
   const response = await fetch(
     `${API_BASE}/jobs/search?${params.toString()}`
   );
 
   if (!response.ok) {
-    throw new Error(`Job search failed: ${response.status}`);
+    throw new Error(
+      `Job search failed: ${response.status}`
+    );
   }
 
-  const data = (await response.json()) as HimalayasResponse | HimalayasJob[];
+  const data =
+    (await response.json()) as
+      | HimalayasResponse
+      | HimalayasJob[];
 
   return extractJobs(data).map(mapJob);
 }
