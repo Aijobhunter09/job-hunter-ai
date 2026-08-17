@@ -561,7 +561,18 @@ export function JobsPage() {
           </p>
         </div>
       )}
-
+      <div className="mt-8 text-center text-sm text-slate-500">
+        Live remote jobs sourced from{' '}
+        <a
+          href="https://himalayas.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary-600 hover:text-primary-700 hover:underline"
+        >
+          Himalayas
+        </a>
+        .
+      </div>
       {applications.length > 0 && (
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
           <div className="flex items-center gap-2">
