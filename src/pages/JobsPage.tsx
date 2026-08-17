@@ -36,7 +36,6 @@ const [savedJobs, setSavedJobs] = useState<string[]>(() => {
 try {
 const stored = localStorage.getItem(SAVED_JOBS_KEY);
 
-```
   if (!stored) {
     return [];
   }
@@ -51,7 +50,6 @@ const stored = localStorage.getItem(SAVED_JOBS_KEY);
 } catch {
   return [];
 }
-```
 
 });
 
@@ -60,7 +58,6 @@ const { applications, addApplication } = useApplications();
 useEffect(() => {
 let cancelled = false;
 
-```
 async function loadJobs() {
   try {
     setLoading(true);
@@ -92,7 +89,6 @@ loadJobs();
 return () => {
   cancelled = true;
 };
-```
 
 }, []);
 
@@ -107,7 +103,6 @@ const next = previous.includes(id)
 ? previous.filter((jobId) => jobId !== id)
 : [...previous, id];
 
-```
   localStorage.setItem(
     SAVED_JOBS_KEY,
     JSON.stringify(next)
@@ -115,7 +110,6 @@ const next = previous.includes(id)
 
   return next;
 });
-```
 
 };
 
@@ -128,7 +122,6 @@ return applications.some(
 const handleApply = (job: Job) => {
 const alreadyApplied = isJobApplied(job.id);
 
-```
 if (!alreadyApplied) {
   const application: Application = {
     id: `application-${job.id}`,
@@ -150,7 +143,6 @@ window.open(
   '_blank',
   'noopener,noreferrer'
 );
-```
 
 };
 
@@ -158,7 +150,6 @@ const filteredJobs = useMemo(() => {
 const searchText = search.trim().toLowerCase();
 const locationText = location.trim().toLowerCase();
 
-```
 return availableJobs.filter((job) => {
   const searchableText = [
     job.title,
@@ -202,9 +193,9 @@ return availableJobs.filter((job) => {
     matchesExperience
   );
 });
-```
 
-}, [
+},
+                             [
 availableJobs,
 search,
 location,
@@ -231,7 +222,6 @@ experience !== 'All';
 return ( <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"> <div className="mb-8"> <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
 Find Your Next Job </h1>
 
-```
     <p className="mt-2 max-w-2xl text-slate-600">
       Search for real remote jobs, filter opportunities,
       and save positions you want to apply for.
@@ -582,7 +572,6 @@ Find Your Next Job </h1>
     </div>
   )}
 </div>
-```
 
 );
 }
