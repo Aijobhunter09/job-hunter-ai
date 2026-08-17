@@ -525,4 +525,3 @@ export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
     </div>
   );
 }
-```
