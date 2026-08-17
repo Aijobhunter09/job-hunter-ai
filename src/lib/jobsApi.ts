@@ -1,126 +1,227 @@
 import type { Job } from '@/types';
 
 interface HimalayasJob {
+  guid?: string;
   id?: string;
   title?: string;
   companyName?: string;
-  company?: {
-    name?: string;
-  };
-  location?: string;
-  locations?: string[];
+
+  locationRestrictions?: string[];
+
   employmentType?: string;
-  seniority?: string;
+
+  seniority?: string | string[];
+
   description?: string;
   excerpt?: string;
-  salary?: {
-    min?: number;
-    max?: number;
-    currency?: string;
-  };
-  minSalary?: number;
-  maxSalary?: number;
+
+  minSalary?: number | null;
+  maxSalary?: number | null;
   currency?: string;
-  skills?: string[];
+  salaryPeriod?: string;
+
+  categories?: string[];
+
   applicationLink?: string;
-  applicationUrl?: string;
-  url?: string;
-  pubDate?: string;
-  publishedAt?: string;
-  createdAt?: string;
+
+  pubDate?: string | number;
 }
 
 interface HimalayasResponse {
   jobs?: HimalayasJob[];
-  data?: HimalayasJob[];
+  totalCount?: number;
 }
 
-const API_URL = 'https://himalayas.app/jobs/api/search';
+const API_URL =
+  'https://himalayas.app/jobs/api?limit=20&offset=0';
 
-function normalizeJob(job: HimalayasJob, index: number): Job {
+function getLocation(job: HimalayasJob): string {
+  if (
+    Array.isArray(job.locationRestrictions) &&
+    job.locationRestrictions.length > 0
+  ) {
+    return job.locationRestrictions.join(', ');
+  }
+
+  return 'Worldwide / Remote';
+}
+
+function getExperience(
+  seniority?: string | string[]
+): Job['experienceLevel'] {
+  const value = Array.isArray(seniority)
+    ? seniority.join(' ')
+    : seniority || '';
+
+  const text = value.toLowerCase();
+
+  if (
+    text.includes('senior') ||
+    text.includes('director') ||
+    text.includes('executive')
+  ) {
+    return 'Senior';
+  }
+
+  if (
+    text.includes('manager') ||
+    text.includes('lead')
+  ) {
+    return 'Lead';
+  }
+
+  if (
+    text.includes('mid') ||
+    text.includes('intermediate')
+  ) {
+    return 'Mid';
+  }
+
+  return 'Entry';
+}
+
+function getJobType(
+  employmentType?: string
+): Job['jobType'] {
+  const value =
+    employmentType?.toLowerCase() || '';
+
+  if (
+    value.includes('part') ||
+    value.includes('part-time')
+  ) {
+    return 'Part-time';
+  }
+
+  if (
+    value.includes('contract') ||
+    value.includes('contractor')
+  ) {
+    return 'Contract';
+  }
+
+  if (
+    value.includes('intern')
+  ) {
+    return 'Internship';
+  }
+
+  return 'Full-time';
+}
+
+function getPostedDate(
+  pubDate?: string | number
+): string {
+  if (!pubDate) {
+    return new Date().toISOString();
+  }
+
+  if (typeof pubDate === 'number') {
+    return new Date(pubDate).toISOString();
+  }
+
+  return pubDate;
+}
+
+function normalizeJob(
+  job: HimalayasJob,
+  index: number
+): Job {
   const company =
     job.companyName ||
-    job.company?.name ||
     'Unknown Company';
 
   const location =
-    job.location ||
-    job.locations?.join(', ') ||
-    'Remote';
+    getLocation(job);
 
   const salaryMin =
-    job.minSalary ||
-    job.salary?.min ||
-    0;
+    typeof job.minSalary === 'number'
+      ? job.minSalary
+      : 0;
 
   const salaryMax =
-    job.maxSalary ||
-    job.salary?.max ||
-    0;
+    typeof job.maxSalary === 'number'
+      ? job.maxSalary
+      : 0;
 
   const currency =
-    job.currency ||
-    job.salary?.currency ||
-    'USD';
+    job.currency || 'USD';
 
-  const salary =
-    salaryMin || salaryMax
-      ? `${currency} ${salaryMin.toLocaleString()}${salaryMax ? ` - ${salaryMax.toLocaleString()}` : '+'}`
-      : 'Salary not specified';
+  let salary = 'Salary not specified';
 
-  const jobType =
-    job.employmentType?.toLowerCase().includes('part')
-      ? 'Part-time'
-      : job.employmentType?.toLowerCase().includes('contract')
-        ? 'Contract'
-        : 'Full-time';
-
-  const experience =
-    job.seniority?.toLowerCase().includes('senior')
-      ? 'Senior'
-      : job.seniority?.toLowerCase().includes('lead')
-        ? 'Lead'
-        : job.seniority?.toLowerCase().includes('mid')
-          ? 'Mid'
-          : 'Entry';
+  if (salaryMin > 0 && salaryMax > 0) {
+    salary =
+      `${currency} ${salaryMin.toLocaleString()} - ${salaryMax.toLocaleString()}`;
+  } else if (salaryMin > 0) {
+    salary =
+      `${currency} ${salaryMin.toLocaleString()}+`;
+  } else if (salaryMax > 0) {
+    salary =
+      `Up to ${currency} ${salaryMax.toLocaleString()}`;
+  }
 
   const description =
-    job.description ||
     job.excerpt ||
+    job.description ||
     'No description available.';
 
   const skills =
-    Array.isArray(job.skills) && job.skills.length > 0
-      ? job.skills
+    Array.isArray(job.categories)
+      ? job.categories
       : [];
 
-  const postedDate =
-    job.pubDate ||
-    job.publishedAt ||
-    job.createdAt ||
-    new Date().toISOString();
-
   return {
-    id: `himalayas-${job.id || index}`,
-    title: job.title || 'Untitled Job',
+    id:
+      `himalayas-${job.guid || job.id || index}`,
+
+    title:
+      job.title || 'Untitled Job',
+
     company,
+
     location,
-    workMode: 'Remote',
-    jobType,
+
+    workMode:
+      'Remote',
+
+    jobType:
+      getJobType(job.employmentType),
+
     salary,
+
     salaryMin,
-    postedDate,
-    matchScore: 0,
+
+    postedDate:
+      getPostedDate(job.pubDate),
+
+    matchScore:
+      0,
+
     skills,
-    experienceLevel: experience,
+
+    experienceLevel:
+      getExperience(job.seniority),
+
     description,
-    responsibilities: [],
-    requirements: skills,
+
+    responsibilities:
+      [],
+
+    requirements:
+      skills,
+
+    applicationUrl:
+      job.applicationLink,
   };
 }
 
 export async function fetchRemoteJobs(): Promise<Job[]> {
-  const response = await fetch(API_URL);
+  const response = await fetch(API_URL, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -131,7 +232,10 @@ export async function fetchRemoteJobs(): Promise<Job[]> {
   const data =
     (await response.json()) as HimalayasResponse;
 
-  const jobs = data.jobs || data.data || [];
+  const jobs =
+    Array.isArray(data.jobs)
+      ? data.jobs
+      : [];
 
   return jobs.map(normalizeJob);
 }
