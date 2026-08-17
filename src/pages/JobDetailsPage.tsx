@@ -145,12 +145,12 @@ export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Button
-            onClick={() => navigate('/applications')}
-            className="flex-1 sm:flex-none"
-          >
-            <FileText className="h-4 w-4" />
-            Apply Now
-          </Button>
+  onClick={() => navigate(`/applications?jobId=${job.id}`)}
+  className="flex-1 sm:flex-none"
+>
+  <FileText className="h-4 w-4" />
+  Apply Now
+</Button>
 
           <Button
             variant="secondary"
