@@ -350,7 +350,7 @@ export function JobsPage() {
   setJobType(value);
   handleLiveSearch(value, experience);
 }}
-                }
+                
               >
                 <option>All</option>
                 <option>Full-time</option>
