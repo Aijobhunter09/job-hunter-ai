@@ -1,7 +1,9 @@
 import type { Job } from '@/types';
 
-export async function fetchJobs(): Promise<Job[]> {
-  const response = await fetch('/api/jobs');
+const API_URL = '/api/jobs';
+
+export async function fetchRemoteJobs(): Promise<Job[]> {
+  const response = await fetch(API_URL);
 
   if (!response.ok) {
     throw new Error(`Unable to load jobs: ${response.status}`);
@@ -9,12 +11,10 @@ export async function fetchJobs(): Promise<Job[]> {
 
   const data = await response.json();
 
-  // Himalayas returns the jobs inside a "jobs" property.
   if (Array.isArray(data?.jobs)) {
     return data.jobs;
   }
 
-  // Fallback in case the API returns an array directly.
   if (Array.isArray(data)) {
     return data;
   }
