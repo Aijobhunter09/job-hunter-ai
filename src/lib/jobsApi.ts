@@ -1,193 +1,103 @@
 import type { Job } from '@/types';
 
-const API_URL = '/api/jobs';
-
-interface HimalayasLocation {
-  alpha2?: string;
-  name?: string;
-  slug?: string;
-}
+const API_BASE = '/api';
 
 interface HimalayasJob {
+  id?: string | number;
   title?: string;
-  excerpt?: string;
   companyName?: string;
-  companySlug?: string;
-  companyLogo?: string;
-  employmentType?: string;
-  minSalary?: number | null;
-  maxSalary?: number | null;
-  salaryPeriod?: string;
-  currency?: string;
-  seniority?: string[];
-  locationRestrictions?: HimalayasLocation[];
-  timezoneRestrictions?: string[];
-  categories?: string[];
-  parentCategories?: string[];
+  company?: string;
+  location?: string;
   description?: string;
-  pubDate?: number;
-  expiryDate?: number;
-  applicationLink?: string;
-  guid?: string;
+  excerpt?: string;
+  employmentType?: string;
+  jobType?: string;
+  seniority?: string;
+  salary?: string;
+  salaryRange?: string;
+  applicationUrl?: string;
+  url?: string;
+  skills?: string[];
 }
 
 interface HimalayasResponse {
   jobs?: HimalayasJob[];
+  data?: HimalayasJob[];
+  total?: number;
+  count?: number;
 }
 
-function getWorkMode(job: HimalayasJob): string {
-  const locations = job.locationRestrictions ?? [];
-
-  if (locations.length === 0) {
-    return 'Remote';
-  }
-
-  return 'Remote';
-}
-
-function getLocation(job: HimalayasJob): string {
-  const locations = job.locationRestrictions ?? [];
-
-  if (locations.length === 0) {
-    return 'Worldwide';
-  }
-
-  return locations
-    .map((location) => location.name)
-    .filter(Boolean)
-    .join(', ') || 'Remote';
-}
-
-function getSalary(job: HimalayasJob): string {
-  const min = job.minSalary;
-  const max = job.maxSalary;
-  const currency = job.currency || 'USD';
-
-  if (min != null && max != null) {
-    return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()} / ${job.salaryPeriod || 'annual'}`;
-  }
-
-  if (min != null) {
-    return `${currency} ${min.toLocaleString()}+ / ${job.salaryPeriod || 'annual'}`;
-  }
-
-  if (max != null) {
-    return `Up to ${currency} ${max.toLocaleString()} / ${job.salaryPeriod || 'annual'}`;
-  }
-
-  return 'Salary not specified';
-}
-
-function getExperienceLevel(job: HimalayasJob): string {
-  const seniority = job.seniority?.[0]?.toLowerCase() || '';
-
-  if (seniority.includes('entry')) {
-    return 'Entry';
-  }
-
-  if (seniority.includes('junior')) {
-    return 'Entry';
-  }
-
-  if (seniority.includes('mid')) {
-    return 'Mid';
-  }
-
-  if (seniority.includes('senior')) {
-    return 'Senior';
-  }
-
-  if (
-    seniority.includes('manager') ||
-    seniority.includes('director') ||
-    seniority.includes('executive')
-  ) {
-    return 'Lead';
-  }
-
-  return 'All Levels';
-}
-
-function getJobType(employmentType?: string): string {
-  switch (employmentType?.toLowerCase()) {
-    case 'full time':
-      return 'Full-time';
-
-    case 'part time':
-      return 'Part-time';
-
-    case 'contractor':
-      return 'Contract';
-
-    case 'temporary':
-      return 'Contract';
-
-    case 'intern':
-      return 'Internship';
-
-    default:
-      return employmentType || 'Full-time';
-  }
-}
-
-function cleanDescription(description?: string, excerpt?: string): string {
-  const source = description || excerpt || 'No description available.';
-
-  return source
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function mapHimalayasJob(job: HimalayasJob, index: number): Job {
-  const id =
-    job.guid ||
-    job.applicationLink ||
-    `${job.companySlug || 'job'}-${index}`;
+function mapJob(job: HimalayasJob, index: number): Job {
+  const title = job.title || 'Untitled Job';
+  const company = job.companyName || job.company || 'Unknown Company';
 
   return {
-    id,
-    title: job.title || 'Untitled Job',
-    company: job.companyName || 'Unknown Company',
-    location: getLocation(job),
-    workMode: getWorkMode(job),
-    jobType: getJobType(job.employmentType),
-    experienceLevel: getExperienceLevel(job),
-    salary: getSalary(job),
-    description: cleanDescription(
-      job.description,
-      job.excerpt
-    ),
-    skills: [
-      ...(job.categories || []),
-      ...(job.parentCategories || []),
-    ].filter(
-      (skill, index, array) =>
-        array.indexOf(skill) === index
-    ),
+    id: String(job.id ?? `${company}-${title}-${index}`),
+    title,
+    company,
+    location: job.location || 'Remote',
+    description: job.description || job.excerpt || '',
+    workMode: 'Remote',
+    jobType: job.employmentType || job.jobType || 'Full-time',
+    experienceLevel: job.seniority || 'Not specified',
+    salary: job.salary || job.salaryRange || 'Salary not specified',
+    applicationUrl: job.applicationUrl || job.url || '',
+    skills: Array.isArray(job.skills) ? job.skills : [],
     matchScore: 0,
-    applicationUrl: job.applicationLink || '',
   };
 }
 
+function extractJobs(data: HimalayasResponse | HimalayasJob[]): HimalayasJob[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data.jobs)) {
+    return data.jobs;
+  }
+
+  if (Array.isArray(data.data)) {
+    return data.data;
+  }
+
+  return [];
+}
+
 export async function fetchRemoteJobs(): Promise<Job[]> {
-  const response = await fetch(API_URL);
+  const response = await fetch(`${API_BASE}/jobs?limit=20&offset=0`);
 
   if (!response.ok) {
-    throw new Error(
-      `Unable to load jobs: ${response.status}`
-    );
+    throw new Error(`Jobs request failed: ${response.status}`);
   }
 
-  const data: HimalayasResponse = await response.json();
+  const data = (await response.json()) as HimalayasResponse | HimalayasJob[];
 
-  if (!Array.isArray(data.jobs)) {
-    throw new Error('Invalid jobs API response');
+  return extractJobs(data).map(mapJob);
+}
+
+export async function searchRemoteJobs(
+  query: string,
+  page = 1
+): Promise<Job[]> {
+  const params = new URLSearchParams();
+
+  const trimmedQuery = query.trim();
+
+  if (trimmedQuery) {
+    params.set('q', trimmedQuery);
   }
 
-  return data.jobs.map(mapHimalayasJob);
+  params.set('page', String(page));
+
+  const response = await fetch(
+    `${API_BASE}/jobs/search?${params.toString()}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Job search failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as HimalayasResponse | HimalayasJob[];
+
+  return extractJobs(data).map(mapJob);
 }
