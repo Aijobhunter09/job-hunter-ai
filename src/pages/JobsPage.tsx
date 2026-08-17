@@ -120,10 +120,11 @@ export function JobsPage() {
     setSearching(true);
     setApiError('');
 
-    const searchedJobs = await searchRemoteJobs({
+  const searchedJobs = await searchRemoteJobs({
   query,
+  employmentType:
+    jobType !== 'All' ? jobType : undefined,
 });
-
     setRemoteJobs(searchedJobs);
   } catch (error) {
     console.error('Failed to search jobs:', error);
