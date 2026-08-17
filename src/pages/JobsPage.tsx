@@ -91,7 +91,9 @@ export function JobsPage() {
   }, []);
 
   const availableJobs =
-    remoteJobs.length > 0 ? remoteJobs : demoJobs;
+    remoteJobs.length > 0
+      ? remoteJobs
+      : demoJobs;
 
   const toggleSavedJob = (id: string) => {
     setSavedJobs((previous) => {
@@ -133,11 +135,24 @@ export function JobsPage() {
       addApplication(application);
     }
 
-    window.open(
-      'https://www.linkedin.com/jobs/',
-      '_blank',
-      'noopener,noreferrer'
-    );
+    if (job.applicationUrl) {
+      window.open(
+        job.applicationUrl,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    } else {
+      const fallbackUrl =
+        `https://www.google.com/search?q=${encodeURIComponent(
+          `${job.title} ${job.company} jobs`
+        )}`;
+
+      window.open(
+        fallbackUrl,
+        '_blank',
+        'noopener,noreferrer'
+      );
+    }
   };
 
   const filteredJobs = useMemo(() => {
@@ -205,8 +220,8 @@ export function JobsPage() {
   };
 
   const hasFilters =
-    search.trim() ||
-    location.trim() ||
+    Boolean(search.trim()) ||
+    Boolean(location.trim()) ||
     workplace !== 'All' ||
     jobType !== 'All' ||
     experience !== 'All';
