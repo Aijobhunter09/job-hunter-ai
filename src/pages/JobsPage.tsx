@@ -120,10 +120,12 @@ export function JobsPage() {
     setSearching(true);
     setApiError('');
 
-  const searchedJobs = await searchRemoteJobs({
+const searchedJobs = await searchRemoteJobs({
   query,
   employmentType:
     jobType !== 'All' ? jobType : undefined,
+  seniority:
+    experience !== 'All' ? experience : undefined,
 });
     setRemoteJobs(searchedJobs);
   } catch (error) {
