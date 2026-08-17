@@ -93,40 +93,28 @@ export function JobsPage() {
       cancelled = true;
     };
   }, []);
-  const handleLiveSearch = async () => {
+  const handleLiveSearch = async (
+  nextJobType = jobType,
+  nextExperience = experience
+) => {
   const query = search.trim();
-
-  if (!query) {
-    try {
-      setSearching(true);
-      setApiError('');
-
-      const fetchedJobs = await fetchRemoteJobs();
-      setRemoteJobs(fetchedJobs);
-    } catch (error) {
-      console.error('Failed to reload jobs:', error);
-
-      setApiError(
-        'Unable to load live jobs right now.'
-      );
-    } finally {
-      setSearching(false);
-    }
-
-    return;
-  }
 
   try {
     setSearching(true);
     setApiError('');
 
-const searchedJobs = await searchRemoteJobs({
-  query,
-  employmentType:
-    jobType !== 'All' ? jobType : undefined,
-  seniority:
-    experience !== 'All' ? experience : undefined,
-});
+    const searchedJobs = await searchRemoteJobs({
+      query,
+      employmentType:
+        nextJobType !== 'All'
+          ? nextJobType
+          : undefined,
+      seniority:
+        nextExperience !== 'All'
+          ? nextExperience
+          : undefined,
+    });
+
     setRemoteJobs(searchedJobs);
   } catch (error) {
     console.error('Failed to search jobs:', error);
@@ -356,8 +344,12 @@ const searchedJobs = await searchRemoteJobs({
               <select
                 className="input"
                 value={jobType}
-                onChange={(e) =>
-                  setJobType(e.target.value)
+               onChange={(e) => {
+  const value = e.target.value;
+
+  setJobType(value);
+  handleLiveSearch(value, experience);
+}}
                 }
               >
                 <option>All</option>
