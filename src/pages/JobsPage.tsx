@@ -430,15 +430,11 @@ export function JobsPage() {
 
          
           <Button
-            onClick={() =>
-              setShowFilters(
-                (value) => !value
-              )
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filters
-          </Button>
-        </div>
+  onClick={() => setShowFilters((value) => !value)}
+>
+  <SlidersHorizontal className="h-4 w-4" />
+  Filters
+</Button>
 
       
         {showFilters && (
