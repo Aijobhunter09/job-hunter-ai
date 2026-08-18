@@ -25,21 +25,6 @@ const SAVED_JOBS_KEY = 'saved_jobs';
 
 /*
  * UI values -> Himalayas API values
- *
- * Himalayas uses:
- * Full Time
- * Part Time
- * Contractor
- * Temporary
- * Intern
- *
- * And seniority:
- * Entry-level
- * Mid-level
- * Senior
- * Manager
- * Director
- * Executive
  */
 const EMPLOYMENT_TYPE_MAP: Record<string, string> = {
   'Full-time': 'Full Time',
@@ -48,6 +33,9 @@ const EMPLOYMENT_TYPE_MAP: Record<string, string> = {
   Internship: 'Intern',
 };
 
+/*
+ * UI experience values -> Himalayas API values
+ */
 const SENIORITY_MAP: Record<string, string> = {
   Entry: 'Entry-level',
   Mid: 'Mid-level',
@@ -61,11 +49,14 @@ export function JobsPage() {
   const [workplace, setWorkplace] = useState('All');
   const [jobType, setJobType] = useState('All');
   const [experience, setExperience] = useState('All');
+
   const [showFilters, setShowFilters] = useState(false);
 
   const [remoteJobs, setRemoteJobs] = useState<Job[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+
   const [apiError, setApiError] = useState('');
 
   const [savedJobs, setSavedJobs] = useState<string[]>(() => {
@@ -80,7 +71,8 @@ export function JobsPage() {
 
       return Array.isArray(parsed)
         ? parsed.filter(
-            (id): id is string => typeof id === 'string'
+            (id): id is string =>
+              typeof id === 'string'
           )
         : [];
     } catch {
@@ -88,7 +80,8 @@ export function JobsPage() {
     }
   });
 
-  const { applications, addApplication } = useApplications();
+  const { applications, addApplication } =
+    useApplications();
 
   /*
    * Initial live jobs load
@@ -114,7 +107,7 @@ export function JobsPage() {
 
         if (!cancelled) {
           setApiError(
-            'Unable to load live jobs right now. Showing demo jobs instead.'
+            'Unable to load live jobs right now.'
           );
 
           setRemoteJobs([]);
@@ -134,43 +127,68 @@ export function JobsPage() {
   }, []);
 
   /*
-   * Search Himalayas live API.
+   * Live Himalayas search
    *
-   * The important part here is that the UI values are
-   * converted into the exact Himalayas API values.
+   * All server-supported filters are sent to the API.
    */
-  const handleLiveSearch = async (
+  const handleLiveSearch = async ({
     nextSearch = search,
+    nextLocation = location,
     nextJobType = jobType,
-    nextExperience = experience
-  ) => {
+    nextExperience = experience,
+  }: {
+    nextSearch?: string;
+    nextLocation?: string;
+    nextJobType?: string;
+    nextExperience?: string;
+  } = {}) => {
     try {
       setSearching(true);
       setApiError('');
 
       const query = nextSearch.trim();
 
+      /*
+       * Convert UI job type to Himalayas value.
+       */
       const employmentType =
         nextJobType !== 'All'
           ? EMPLOYMENT_TYPE_MAP[nextJobType]
           : undefined;
 
+      /*
+       * Convert UI experience to Himalayas value.
+       */
       const seniority =
         nextExperience !== 'All'
           ? SENIORITY_MAP[nextExperience]
           : undefined;
 
-      console.log('Himalayas search:', {
-        query,
-        employmentType,
-        seniority,
-      });
+      /*
+       * Location is passed as country/location
+       * to the API.
+       */
+      const country = nextLocation.trim() || undefined;
 
-      const searchedJobs = await searchRemoteJobs({
-        query,
-        employmentType,
-        seniority,
-      });
+      console.log(
+        'Searching Himalayas jobs:',
+        {
+          query,
+          country,
+          employmentType,
+          seniority,
+        }
+      );
+
+      const searchedJobs =
+        await searchRemoteJobs({
+          query,
+          country,
+          employmentType,
+          seniority,
+          sort: 'date',
+          page: 1,
+        });
 
       setRemoteJobs(searchedJobs);
     } catch (error) {
@@ -182,19 +200,24 @@ export function JobsPage() {
       setApiError(
         'Unable to search live jobs right now. Please try again.'
       );
+
+      /*
+       * Do not replace live results with demo
+       * jobs when a search fails.
+       */
+      setRemoteJobs([]);
     } finally {
       setSearching(false);
     }
   };
 
   /*
-   * Use live jobs when available.
-   * Demo jobs are only used when there are no live jobs.
+   * Workplace filtering
+   *
+   * Himalayas jobs are currently normalized as Remote.
+   * Therefore workplace is safely filtered locally.
    */
-  const availableJobs =
-    remoteJobs.length > 0
-      ? remoteJobs
-      : demoJobs;
+  const availableJobs = remoteJobs;
 
   /*
    * Save / unsave job
@@ -202,7 +225,9 @@ export function JobsPage() {
   const toggleSavedJob = (id: string) => {
     setSavedJobs((previous) => {
       const next = previous.includes(id)
-        ? previous.filter((jobId) => jobId !== id)
+        ? previous.filter(
+            (jobId) => jobId !== id
+          )
         : [...previous, id];
 
       try {
@@ -222,11 +247,12 @@ export function JobsPage() {
   };
 
   /*
-   * Check whether job has already been applied to
+   * Check whether a job has already been applied to.
    */
   const isJobApplied = (jobId: string) => {
     return applications.some(
-      (application) => application.jobId === jobId
+      (application) =>
+        application.jobId === jobId
     );
   };
 
@@ -234,7 +260,8 @@ export function JobsPage() {
    * Apply to job
    */
   const handleApply = (job: Job) => {
-    const alreadyApplied = isJobApplied(job.id);
+    const alreadyApplied =
+      isJobApplied(job.id);
 
     if (!alreadyApplied) {
       const application: Application = {
@@ -245,7 +272,8 @@ export function JobsPage() {
         location: job.location,
         workMode: job.workMode,
         salary: job.salary,
-        appliedDate: new Date().toISOString(),
+        appliedDate:
+          new Date().toISOString(),
         status: 'Applied',
       };
 
@@ -273,53 +301,30 @@ export function JobsPage() {
   };
 
   /*
-   * Local filtering
-   *
-   * This is intentionally kept for:
-   * - location
-   * - workplace
-   *
-   * Employment type and experience are primarily handled
-   * by the live Himalayas search API.
+   * Workplace is the only filter that remains
+   * local because our current API adapter
+   * normalizes workplace as workMode.
    */
   const filteredJobs = useMemo(() => {
-    const locationText =
-      location.trim().toLowerCase();
-
     return availableJobs.filter((job) => {
-      const matchesLocation =
-        !locationText ||
-        job.location
-          .toLowerCase()
-          .includes(locationText) ||
-        job.workMode
-          .toLowerCase()
-          .includes(locationText);
+      if (workplace === 'All') {
+        return true;
+      }
 
-      const matchesWorkplace =
-        workplace === 'All' ||
-        job.workMode === workplace;
-
-      return (
-        matchesLocation &&
-        matchesWorkplace
-      );
+      return job.workMode === workplace;
     });
-  }, [
-    availableJobs,
-    location,
-    workplace,
-  ]);
+  }, [availableJobs, workplace]);
 
   /*
    * Search submit
    */
   const handleSearchSubmit = () => {
-    handleLiveSearch(
-      search,
-      jobType,
-      experience
-    );
+    handleLiveSearch({
+      nextSearch: search,
+      nextLocation: location,
+      nextJobType: jobType,
+      nextExperience: experience,
+    });
   };
 
   /*
@@ -330,11 +335,12 @@ export function JobsPage() {
   ) => {
     setJobType(value);
 
-    handleLiveSearch(
-      search,
-      value,
-      experience
-    );
+    handleLiveSearch({
+      nextSearch: search,
+      nextLocation: location,
+      nextJobType: value,
+      nextExperience: experience,
+    });
   };
 
   /*
@@ -345,27 +351,32 @@ export function JobsPage() {
   ) => {
     setExperience(value);
 
-    handleLiveSearch(
-      search,
-      jobType,
-      value
-    );
+    handleLiveSearch({
+      nextSearch: search,
+      nextLocation: location,
+      nextJobType: jobType,
+      nextExperience: value,
+    });
   };
 
   /*
    * Workplace change
-   *
-   * Workplace is not a Himalayas employment type.
-   * It is handled locally against the normalized job data.
    */
   const handleWorkplaceChange = (
     value: string
   ) => {
     setWorkplace(value);
+
+    /*
+     * Workplace currently uses local
+     * normalized data.
+     *
+     * No API request is needed here.
+     */
   };
 
   /*
-   * Clear all filters
+   * Clear filters and reload initial live jobs.
    */
   const clearFilters = async () => {
     setSearch('');
@@ -378,7 +389,8 @@ export function JobsPage() {
       setSearching(true);
       setApiError('');
 
-      const freshJobs = await fetchRemoteJobs();
+      const freshJobs =
+        await fetchRemoteJobs();
 
       setRemoteJobs(freshJobs);
     } catch (error) {
@@ -390,6 +402,8 @@ export function JobsPage() {
       setApiError(
         'Unable to reload live jobs right now.'
       );
+
+      setRemoteJobs([]);
     } finally {
       setSearching(false);
     }
@@ -402,10 +416,8 @@ export function JobsPage() {
     jobType !== 'All' ||
     experience !== 'All';
 
-  /*
-   * Loading / searching status
-   */
-  const isBusy = loading || searching;
+  const isBusy =
+    loading || searching;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -417,8 +429,9 @@ export function JobsPage() {
         </h1>
 
         <p className="mt-2 max-w-2xl text-slate-600">
-          Search for real remote jobs, filter opportunities,
-          and save positions you want to apply for.
+          Search for real remote jobs, filter
+          opportunities, and save positions you
+          want to apply for.
         </p>
       </div>
 
@@ -461,7 +474,7 @@ export function JobsPage() {
                   handleSearchSubmit();
                 }
               }}
-              placeholder="City, country, or remote..."
+              placeholder="Country, city, or remote..."
             />
           </div>
 
@@ -471,7 +484,6 @@ export function JobsPage() {
               setShowFilters(
                 (value) => !value
               )
-            }
           >
             <SlidersHorizontal className="h-4 w-4" />
             Filters
@@ -622,7 +634,7 @@ export function JobsPage() {
                 : 'Fetching the latest remote opportunities.'
               : remoteJobs.length > 0
                 ? 'Live jobs loaded from the Himalayas jobs API.'
-                : 'Showing demo opportunities.'}
+                : 'No live jobs matched your search.'}
           </p>
         </div>
 
@@ -835,9 +847,9 @@ export function JobsPage() {
           </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-            Try changing your search keywords,
-            location, or filters to find more
-            opportunities.
+            No live Himalayas jobs matched
+            your current search and filters.
+            Try another combination.
           </p>
 
           <div className="mt-5">
@@ -890,7 +902,6 @@ export function JobsPage() {
         >
           Himalayas
         </a>
-
         .
 
       </div>
