@@ -37,6 +37,69 @@ const SENIORITY_MAP: Record<string, string> = {
   Lead: 'Manager',
 };
 
+/**
+ * Normalize common country/location values.
+ *
+ * This helps local filtering understand that:
+ * USA, US and United States
+ * refer to the same country.
+ */
+function normalizeLocation(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[.,]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function locationMatches(
+  jobLocation: string,
+  searchLocation: string
+): boolean {
+  const jobText = normalizeLocation(jobLocation);
+  const searchText = normalizeLocation(searchLocation);
+
+  if (!searchText) {
+    return true;
+  }
+
+  if (jobText.includes(searchText)) {
+    return true;
+  }
+
+  const aliases: Record<string, string[]> = {
+    usa: ['usa', 'us', 'united states', 'united states of america'],
+    us: ['usa', 'us', 'united states', 'united states of america'],
+    'united states': [
+      'usa',
+      'us',
+      'united states',
+      'united states of america',
+    ],
+    uk: ['uk', 'united kingdom', 'great britain'],
+    'united kingdom': [
+      'uk',
+      'united kingdom',
+      'great britain',
+    ],
+    uae: ['uae', 'united arab emirates'],
+    'united arab emirates': [
+      'uae',
+      'united arab emirates',
+    ],
+  };
+
+  const matchingAliases = aliases[searchText];
+
+  if (matchingAliases) {
+    return matchingAliases.some((alias) =>
+      jobText.includes(alias)
+    );
+  }
+
+  return false;
+}
+
 export function JobsPage() {
   const [search, setSearch] = useState('');
   const [location, setLocation] = useState('');
@@ -74,6 +137,9 @@ export function JobsPage() {
 
   const { applications, addApplication } = useApplications();
 
+  /**
+   * Initial live jobs load.
+   */
   useEffect(() => {
     let cancelled = false;
 
@@ -82,18 +148,25 @@ export function JobsPage() {
         setLoading(true);
         setApiError('');
 
-        const fetchedJobs = await fetchRemoteJobs();
+        const fetchedJobs = await fetchRemoteJobs({
+          limit: 20,
+          offset: 0,
+        });
 
         if (!cancelled) {
           setRemoteJobs(fetchedJobs);
         }
       } catch (error) {
-        console.error('Failed to load remote jobs:', error);
+        console.error(
+          'Failed to load remote jobs:',
+          error
+        );
 
         if (!cancelled) {
           setApiError(
             'Unable to load live jobs right now. Showing demo jobs instead.'
           );
+
           setRemoteJobs([]);
         }
       } finally {
@@ -103,15 +176,29 @@ export function JobsPage() {
       }
     }
 
-    loadJobs();
+    void loadJobs();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
+  /**
+   * Search live Himalayas jobs.
+   *
+   * IMPORTANT:
+   * Location is now passed to jobsApi.ts as "country".
+   *
+   * Example:
+   * Web Developer + USA
+   *
+   * becomes approximately:
+   *
+   * /api/jobs/search?q=Web%20Developer&country=USA
+   */
   const handleLiveSearch = async (
     nextSearch = search,
+    nextLocation = location,
     nextJobType = jobType,
     nextExperience = experience
   ) => {
@@ -120,6 +207,7 @@ export function JobsPage() {
       setApiError('');
 
       const query = nextSearch.trim();
+      const country = nextLocation.trim();
 
       const employmentType =
         nextJobType !== 'All'
@@ -133,19 +221,25 @@ export function JobsPage() {
 
       console.log('Job search request:', {
         query,
+        country,
         employmentType,
         seniority,
       });
 
       const searchedJobs = await searchRemoteJobs({
         query: query || undefined,
+        country: country || undefined,
         employmentType,
         seniority,
+        page: 1,
       });
 
       setRemoteJobs(searchedJobs);
     } catch (error) {
-      console.error('Failed to search live jobs:', error);
+      console.error(
+        'Failed to search live jobs:',
+        error
+      );
 
       setApiError(
         'Unable to search live jobs right now. Please try again.'
@@ -155,14 +249,25 @@ export function JobsPage() {
     }
   };
 
+  /**
+   * Use live jobs when available.
+   * Demo jobs are used only when the API returns no jobs.
+   */
   const availableJobs = useMemo(() => {
-    return remoteJobs.length > 0 ? remoteJobs : demoJobs;
+    return remoteJobs.length > 0
+      ? remoteJobs
+      : demoJobs;
   }, [remoteJobs]);
 
+  /**
+   * Save / unsave a job.
+   */
   const toggleSavedJob = (id: string) => {
     setSavedJobs((previous) => {
       const next = previous.includes(id)
-        ? previous.filter((jobId) => jobId !== id)
+        ? previous.filter(
+            (jobId) => jobId !== id
+          )
         : [...previous, id];
 
       try {
@@ -181,14 +286,22 @@ export function JobsPage() {
     });
   };
 
+  /**
+   * Check whether a job has already been applied to.
+   */
   const isJobApplied = (jobId: string) => {
     return applications.some(
-      (application) => application.jobId === jobId
+      (application) =>
+        application.jobId === jobId
     );
   };
 
+  /**
+   * Apply to a job.
+   */
   const handleApply = (job: Job) => {
-    const alreadyApplied = isJobApplied(job.id);
+    const alreadyApplied =
+      isJobApplied(job.id);
 
     if (!alreadyApplied) {
       const application: Application = {
@@ -199,7 +312,8 @@ export function JobsPage() {
         location: job.location,
         workMode: job.workMode,
         salary: job.salary,
-        appliedDate: new Date().toISOString(),
+        appliedDate:
+          new Date().toISOString(),
         status: 'Applied',
       };
 
@@ -213,9 +327,10 @@ export function JobsPage() {
         'noopener,noreferrer'
       );
     } else {
-      const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(
-        `${job.title} ${job.company} jobs`
-      )}`;
+      const fallbackUrl =
+        `https://www.google.com/search?q=${encodeURIComponent(
+          `${job.title} ${job.company} jobs`
+        )}`;
 
       window.open(
         fallbackUrl,
@@ -225,20 +340,32 @@ export function JobsPage() {
     }
   };
 
+  /**
+   * Local filtering.
+   *
+   * Location:
+   * - Primarily sent to the API.
+   * - Also checked locally as a safety net.
+   *
+   * Workplace:
+   * - Filtered locally because workplace
+   *   is normalized in our Job type.
+   */
   const filteredJobs = useMemo(() => {
-    const locationText = location.trim().toLowerCase();
+    const locationText =
+      location.trim();
 
     return availableJobs.filter((job) => {
-      const jobLocation =
-        job.location?.toLowerCase() || '';
-
-      const jobWorkMode =
-        job.workMode?.toLowerCase() || '';
-
       const matchesLocation =
         !locationText ||
-        jobLocation.includes(locationText) ||
-        jobWorkMode.includes(locationText);
+        locationMatches(
+          job.location || '',
+          locationText
+        ) ||
+        locationMatches(
+          job.workMode || '',
+          locationText
+        );
 
       const matchesWorkplace =
         workplace === 'All' ||
@@ -255,14 +382,21 @@ export function JobsPage() {
     workplace,
   ]);
 
+  /**
+   * Search submit.
+   */
   const handleSearchSubmit = () => {
     void handleLiveSearch(
       search,
+      location,
       jobType,
       experience
     );
   };
 
+  /**
+   * Job type change.
+   */
   const handleJobTypeChange = (
     value: string
   ) => {
@@ -270,11 +404,15 @@ export function JobsPage() {
 
     void handleLiveSearch(
       search,
+      location,
       value,
       experience
     );
   };
 
+  /**
+   * Experience change.
+   */
   const handleExperienceChange = (
     value: string
   ) => {
@@ -282,17 +420,39 @@ export function JobsPage() {
 
     void handleLiveSearch(
       search,
+      location,
       jobType,
       value
     );
   };
 
+  /**
+   * Workplace change.
+   *
+   * Workplace is handled locally.
+   */
   const handleWorkplaceChange = (
     value: string
   ) => {
     setWorkplace(value);
   };
 
+  /**
+   * Location change.
+   *
+   * We intentionally wait until Enter/Search
+   * rather than sending an API request on
+   * every keystroke.
+   */
+  const handleLocationChange = (
+    value: string
+  ) => {
+    setLocation(value);
+  };
+
+  /**
+   * Clear all filters and reload live jobs.
+   */
   const clearFilters = async () => {
     setSearch('');
     setLocation('');
@@ -304,7 +464,11 @@ export function JobsPage() {
       setSearching(true);
       setApiError('');
 
-      const freshJobs = await fetchRemoteJobs();
+      const freshJobs =
+        await fetchRemoteJobs({
+          limit: 20,
+          offset: 0,
+        });
 
       setRemoteJobs(freshJobs);
     } catch (error) {
@@ -328,10 +492,13 @@ export function JobsPage() {
     jobType !== 'All' ||
     experience !== 'All';
 
-  const isBusy = loading || searching;
+  const isBusy =
+    loading || searching;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+      {/* PAGE HEADER */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
           Find Your Next Job
@@ -343,8 +510,12 @@ export function JobsPage() {
         </p>
       </div>
 
+      {/* SEARCH / FILTER CARD */}
       <div className="card p-4">
+
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_auto]">
+
+          {/* SEARCH */}
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
@@ -363,6 +534,7 @@ export function JobsPage() {
             />
           </div>
 
+          {/* LOCATION */}
           <div className="relative">
             <MapPin className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
@@ -370,20 +542,25 @@ export function JobsPage() {
               className="input pl-10"
               value={location}
               onChange={(e) =>
-                setLocation(e.target.value)
+                handleLocationChange(
+                  e.target.value
+                )
               }
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleSearchSubmit();
                 }
               }}
-              placeholder="City, country, or remote..."
+              placeholder="Country, city, or location..."
             />
           </div>
 
+          {/* FILTER BUTTON */}
           <Button
             onClick={() =>
-              setShowFilters((value) => !value)
+              setShowFilters(
+                (value) => !value
+              )
             }
           >
             <SlidersHorizontal className="h-4 w-4" />
@@ -391,8 +568,11 @@ export function JobsPage() {
           </Button>
         </div>
 
+        {/* FILTERS */}
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 sm:grid-cols-3">
+
+            {/* WORKPLACE */}
             <div>
               <label className="label">
                 Workplace
@@ -425,6 +605,7 @@ export function JobsPage() {
               </select>
             </div>
 
+            {/* JOB TYPE */}
             <div>
               <label className="label">
                 Job Type
@@ -461,6 +642,7 @@ export function JobsPage() {
               </select>
             </div>
 
+            {/* EXPERIENCE */}
             <div>
               <label className="label">
                 Experience
@@ -500,12 +682,14 @@ export function JobsPage() {
         )}
       </div>
 
+      {/* API ERROR */}
       {apiError && (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
           {apiError}
         </div>
       )}
 
+      {/* RESULTS HEADER */}
       <div className="mb-4 mt-8 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-medium text-slate-900">
@@ -531,6 +715,7 @@ export function JobsPage() {
           </p>
         </div>
 
+        {/* CLEAR FILTERS */}
         {hasFilters && !isBusy && (
           <button
             type="button"
@@ -545,6 +730,7 @@ export function JobsPage() {
         )}
       </div>
 
+      {/* LOADING / SEARCHING */}
       {isBusy ? (
         <div className="card flex min-h-[300px] items-center justify-center p-10">
           <div className="flex flex-col items-center gap-3 text-slate-500">
@@ -558,7 +744,10 @@ export function JobsPage() {
           </div>
         </div>
       ) : filteredJobs.length > 0 ? (
+
+        /* JOB GRID */
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+
           {filteredJobs.map((job) => {
             const isSaved =
               savedJobs.includes(job.id);
@@ -571,8 +760,11 @@ export function JobsPage() {
                 key={job.id}
                 className="card flex flex-col p-5 transition-shadow hover:shadow-md"
               >
+
+                {/* JOB TITLE */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
+
                     <h2 className="text-lg font-semibold text-slate-900">
                       {job.title}
                     </h2>
@@ -580,12 +772,16 @@ export function JobsPage() {
                     <p className="mt-1 font-medium text-primary-600">
                       {job.company}
                     </p>
+
                   </div>
 
+                  {/* SAVE ICON */}
                   <button
                     type="button"
                     onClick={() =>
-                      toggleSavedJob(job.id)
+                      toggleSavedJob(
+                        job.id
+                      )
                     }
                     className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-primary-600"
                     aria-label={
@@ -602,7 +798,9 @@ export function JobsPage() {
                   </button>
                 </div>
 
+                {/* LOCATION / JOB TYPE */}
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="h-4 w-4" />
                     {job.location}
@@ -612,9 +810,12 @@ export function JobsPage() {
                     <Briefcase className="h-4 w-4" />
                     {job.jobType}
                   </span>
+
                 </div>
 
+                {/* BADGES */}
                 <div className="mt-4 flex flex-wrap gap-2">
+
                   <span className="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
                     {job.workMode}
                   </span>
@@ -628,18 +829,23 @@ export function JobsPage() {
                       {job.matchScore}% Match
                     </span>
                   )}
+
                 </div>
 
+                {/* SALARY */}
                 <p className="mt-4 text-sm font-semibold text-slate-800">
                   {job.salary}
                 </p>
 
+                {/* DESCRIPTION */}
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-600">
                   {job.description}
                 </p>
 
+                {/* SKILLS */}
                 {job.skills.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
+
                     {job.skills
                       .slice(0, 8)
                       .map((skill) => (
@@ -650,10 +856,13 @@ export function JobsPage() {
                           {skill}
                         </span>
                       ))}
+
                   </div>
                 )}
 
+                {/* ACTION BUTTONS */}
                 <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+
                   <Button
                     onClick={() =>
                       handleApply(job)
@@ -675,7 +884,9 @@ export function JobsPage() {
                   <Button
                     variant="secondary"
                     onClick={() =>
-                      toggleSavedJob(job.id)
+                      toggleSavedJob(
+                        job.id
+                      )
                     }
                   >
                     {isSaved ? (
@@ -690,13 +901,19 @@ export function JobsPage() {
                       </>
                     )}
                   </Button>
+
                 </div>
               </div>
             );
           })}
+
         </div>
+
       ) : (
+
+        /* NO RESULTS */
         <div className="card p-10 text-center">
+
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
             <Search className="h-6 w-6 text-slate-400" />
           </div>
@@ -721,12 +938,16 @@ export function JobsPage() {
               Clear Search
             </Button>
           </div>
+
         </div>
       )}
 
+      {/* SAVED JOBS */}
       {savedJobs.length > 0 && (
         <div className="mt-8 rounded-lg border border-primary-100 bg-primary-50 p-4">
+
           <div className="flex items-center gap-2">
+
             <BookmarkCheck className="h-5 w-5 text-primary-600" />
 
             <p className="text-sm font-medium text-slate-800">
@@ -735,16 +956,20 @@ export function JobsPage() {
                 ? 'saved job'
                 : 'saved jobs'}.
             </p>
+
           </div>
 
           <p className="mt-1 text-xs text-slate-500">
             Saved jobs are stored locally in
             your browser.
           </p>
+
         </div>
       )}
 
+      {/* HIMALAYAS ATTRIBUTION */}
       <div className="mt-8 text-center text-sm text-slate-500">
+
         Live remote jobs sourced from{' '}
 
         <a
@@ -755,12 +980,16 @@ export function JobsPage() {
         >
           Himalayas
         </a>
+
         .
       </div>
 
+      {/* APPLICATIONS */}
       {applications.length > 0 && (
         <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4">
+
           <div className="flex items-center gap-2">
+
             <CheckCircle2 className="h-5 w-5 text-blue-600" />
 
             <p className="text-sm font-medium text-slate-800">
@@ -770,14 +999,17 @@ export function JobsPage() {
                 : 'applications'}{' '}
               tracked.
             </p>
+
           </div>
 
           <p className="mt-1 text-xs text-slate-500">
             Your applications are automatically
             tracked in the Applications section.
           </p>
+
         </div>
       )}
+
     </div>
   );
 }
