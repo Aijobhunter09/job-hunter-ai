@@ -30,6 +30,107 @@ interface HimalayasResponse {
   hasMore?: boolean;
 }
 
+function normalizeCountry(country: string): string {
+  const value = country.trim().toLowerCase();
+
+  const countryMap: Record<string, string> = {
+    usa: 'US',
+    us: 'US',
+    'united states': 'US',
+    'united states of america': 'US',
+    america: 'US',
+
+    uk: 'GB',
+    'united kingdom': 'GB',
+    britain: 'GB',
+    'great britain': 'GB',
+
+    pakistan: 'PK',
+    pk: 'PK',
+
+    canada: 'CA',
+    ca: 'CA',
+
+    australia: 'AU',
+    au: 'AU',
+
+    germany: 'DE',
+    de: 'DE',
+
+    france: 'FR',
+    fr: 'FR',
+
+    india: 'IN',
+    in: 'IN',
+
+    brazil: 'BR',
+    br: 'BR',
+
+    spain: 'ES',
+    es: 'ES',
+
+    italy: 'IT',
+    it: 'IT',
+
+    japan: 'JP',
+    jp: 'JP',
+
+    china: 'CN',
+    cn: 'CN',
+
+    singapore: 'SG',
+    sg: 'SG',
+
+    'new zealand': 'NZ',
+    nz: 'NZ',
+
+    netherlands: 'NL',
+    nl: 'NL',
+
+    ireland: 'IE',
+    ie: 'IE',
+
+    switzerland: 'CH',
+    ch: 'CH',
+
+    sweden: 'SE',
+    se: 'SE',
+
+    norway: 'NO',
+    no: 'NO',
+
+    denmark: 'DK',
+    dk: 'DK',
+
+    finland: 'FI',
+    fi: 'FI',
+
+    poland: 'PL',
+    pl: 'PL',
+
+    portugal: 'PT',
+    pt: 'PT',
+
+    austria: 'AT',
+    at: 'AT',
+
+    belgium: 'BE',
+    be: 'BE',
+
+    'south africa': 'ZA',
+    za: 'ZA',
+
+    'south korea': 'KR',
+    korea: 'KR',
+    kr: 'KR',
+
+    mexico: 'MX',
+    mx: 'MX',
+  };
+
+  return countryMap[value] || country.trim();
+}
+
 function mapJob(
   job: HimalayasJob,
   index: number
@@ -125,8 +226,20 @@ export async function fetchRemoteJobs(
   const offset =
     options.offset ?? 0;
 
+  const params = new URLSearchParams();
+
+  params.set(
+    'limit',
+    String(limit)
+  );
+
+  params.set(
+    'offset',
+    String(offset)
+  );
+
   const response = await fetch(
-    `${API_BASE}/jobs?limit=${limit}&offset=${offset}`
+    `${API_BASE}/jobs?${params.toString()}`
   );
 
   if (!response.ok) {
@@ -160,11 +273,6 @@ export interface JobSearchOptions {
   employmentType?: string;
   timezone?: string;
   sort?: string;
-
-  /**
-   * Himalayas search page.
-   * Starts at 1.
-   */
   page?: number;
 }
 
@@ -185,9 +293,14 @@ export async function searchRemoteJobs(
   }
 
   if (options.country?.trim()) {
+    const normalizedCountry =
+      normalizeCountry(
+        options.country
+      );
+
     params.set(
       'country',
-      options.country.trim()
+      normalizedCountry
     );
   }
 
@@ -226,9 +339,16 @@ export async function searchRemoteJobs(
     String(options.page ?? 1)
   );
 
-  const response = await fetch(
-    `${API_BASE}/jobs/search?${params.toString()}`
+  const url =
+    `${API_BASE}/jobs/search?${params.toString()}`;
+
+  console.log(
+    'Jobs API request:',
+    url
   );
+
+  const response =
+    await fetch(url);
 
   if (!response.ok) {
     throw new Error(
