@@ -221,9 +221,9 @@ export function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-primary-700 py-16 sm:py-20">
+      <section className="bg-primary-700 py-16 sm:py-20" aria-labelledby="home-cta">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">Your next opportunity starts here.</h2>
+          <h2 id="home-cta" className="text-3xl font-bold text-white sm:text-4xl">Your next opportunity starts here.</h2>
           <p className="mt-4 text-primary-100">Join AI Job Hunter and transform how you search for jobs.</p>
           <div className="mt-8">
             <button
