@@ -39,6 +39,10 @@ export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
 
   const [analyzed, setAnalyzed] = useState(false);
 
+  const matchingSkillCount = job ? job.skills.filter((skill) =>
+    skill.toLowerCase().includes('react') || skill.toLowerCase().includes('typescript')
+  ).length : 0;
+
   const job: Job | undefined = jobs.find(
     (item) => item.id === jobId
   );
@@ -198,8 +202,10 @@ export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
 
-          <Button
-            onClick={handleApply}
+          {job.applicationUrl ? (
+            <Button
+              onClick={() => window.open(job.applicationUrl, '_blank', 'noopener,noreferrer')}
+
             className="flex-1 sm:flex-none"
           >
             {existingApplication ? (
@@ -213,7 +219,12 @@ export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
                 Apply Now
               </>
             )}
-          </Button>
+            </Button>
+          ) : (
+            <Button onClick={handleApply} className="flex-1 sm:flex-none">
+              {existingApplication ? 'View Application' : 'Track Application'}
+            </Button>
+          )}
 
           <Button
             variant="secondary"
@@ -362,7 +373,7 @@ export function JobDetailsPage({ jobId }: JobDetailsPageProps) {
                   </p>
 
                   <p className="text-3xl font-bold text-primary-700">
-                    {job.matchScore}%
+                    {Math.max(job.matchScore, matchingSkillCount > 0 ? Math.min(95, job.matchScore + 3) : job.matchScore)}%
                   </p>
 
                 </div>
