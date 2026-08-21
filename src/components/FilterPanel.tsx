@@ -87,9 +87,12 @@ export function FilterPanel({
   onReset,
 }: FilterPanelProps) {
   return (
-    <div className="card p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold text-slate-900">Filters</h3>
+    <div className="card p-5" aria-label="Job filters">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="font-semibold text-slate-900">Filters</h3>
+          <p className="mt-0.5 text-xs text-slate-500">Narrow jobs by location, type, salary and experience.</p>
+        </div>
         <button
           onClick={onReset}
           className="text-sm font-medium text-primary-700 hover:text-primary-800"
