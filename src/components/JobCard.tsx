@@ -1,4 +1,4 @@
-import { MapPin, Briefcase, DollarSign, Bookmark } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Bookmark, ExternalLink } from 'lucide-react';
 import type { Job } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { MatchScore } from '@/components/MatchScore';
@@ -87,6 +87,18 @@ export function JobCard({ job, isSaved, onToggleSave, compact = false }: JobCard
           >
             View Job
           </button>
+          {job.applicationUrl && (
+            <a
+              href={job.applicationUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-primary-700"
+              aria-label="Open application page"
+            >
+              <ExternalLink className="h-[18px] w-[18px]" />
+            </a>
+          )}
         </div>
       </div>
     </div>
