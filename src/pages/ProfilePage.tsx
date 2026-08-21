@@ -43,8 +43,10 @@ const profileCompletion = Math.round(
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">My Profile</h1>
-        <p className="mt-2 text-slate-600">Tell AI about yourself to get better job matches.</p>
+        <p className="mt-2 text-slate-600">Keep your professional profile current to improve job matching and interview preparation.</p>
       </div>
+      <div className="mb-4 rounded-lg border border-primary-100 bg-primary-50 p-4 text-sm text-primary-800"><strong>Recommended next step:</strong> add your target role, location, and 3–5 core skills to improve matching quality.</div>
+
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
   <div className="flex items-center justify-between">
     <div>
