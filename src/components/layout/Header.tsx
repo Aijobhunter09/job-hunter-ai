@@ -26,7 +26,7 @@ export function Header({ currentPath }: HeaderProps) {
   const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md" role="banner">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <button onClick={() => go('/')} className="flex items-center gap-2.5" aria-label="AI Job Hunter home">
@@ -39,7 +39,7 @@ export function Header({ currentPath }: HeaderProps) {
         </button>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" aria-label="Primary navigation">
           {navLinks.map((link) => (
             <button
               key={link.path}
@@ -86,7 +86,7 @@ export function Header({ currentPath }: HeaderProps) {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="border-t border-slate-200 bg-white md:hidden animate-slide-up">
-          <nav className="space-y-1 px-4 py-3">
+          <nav className="space-y-1 px-4 py-3" aria-label="Mobile navigation">
             {navLinks.map((link) => (
               <button
                 key={link.path}
