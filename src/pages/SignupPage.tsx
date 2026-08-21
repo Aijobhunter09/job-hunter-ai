@@ -8,11 +8,13 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('Demo mode: Authentication is not yet connected. Redirecting to dashboard...');
-    setTimeout(() => navigate('/dashboard'), 1500);
+    setBusy(true);
+    setMessage('Demo mode: authentication is not connected yet. Opening your dashboard...');
+    setTimeout(() => navigate('/dashboard'), 700);
   };
 
   return (
@@ -93,7 +95,7 @@ export function SignupPage() {
               ))}
             </div>
 
-            <button type="submit" className="btn-primary w-full py-3">
+            <button type="submit" disabled={busy} className="btn-primary w-full py-3">
               Create Account <ArrowRight className="h-4 w-4" />
             </button>
           </form>
