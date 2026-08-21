@@ -40,8 +40,8 @@ function renderPage(path: string) {
       return <DashboardPage />;
     case 'jobs':
       return <JobsPage />;
-      case 'savedJobs':
-  return <SavedJobsPage />;
+    case 'savedJobs':
+      return <SavedJobsPage />;
     case 'jobDetails':
       return <JobDetailsPage jobId={match.params.id} />;
     case 'resume':
