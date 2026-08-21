@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://aijobhunter.example/sitemap.xml
+Sitemap: https://
+job-hunter-ai.avishroyal9.workers.dev/sitemap.xml
